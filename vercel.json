@@ -1,6 +1,11 @@
 {
+  "version": 2,
   "cleanUrls": true,
   "trailingSlash": false,
-  "buildCommand": null,
-  "outputDirectory": "."
+  "builds": [
+    {
+      "src": "**/*.{html,css,js,jsx,svg,png,jpg,jpeg,gif,webp,ico,woff,woff2,ttf,otf,json}",
+      "use": "@vercel/static"
+    }
+  ]
 }
