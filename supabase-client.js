@@ -114,12 +114,56 @@
     return res.json();
   }
 
+  // ---------- Bot licenses ----------
+  async function adminGenActivationCode(purchaseId) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/gen_bot_activation_code`, {
+      method: "POST",
+      headers: authHeaders(true),
+      body: JSON.stringify({ p_purchase_id: purchaseId }),
+    });
+    if (!res.ok) {
+      let msg = "No se pudo generar el código";
+      try { const b = await res.json(); msg = b.message || b.hint || msg; } catch (_) {}
+      return { ok: false, message: msg };
+    }
+    const code = await res.json(); // PostgREST devuelve el TEXT directo
+    return { ok: true, code };
+  }
+
+  async function adminListActivationCodes(purchaseId) {
+    const url = purchaseId
+      ? `${SUPABASE_URL}/rest/v1/bot_activation_codes?select=*&purchase_id=eq.${purchaseId}&order=created_at.desc`
+      : `${SUPABASE_URL}/rest/v1/bot_activation_codes?select=*&order=created_at.desc`;
+    const res = await fetch(url, { headers: authHeaders(true) });
+    if (!res.ok) return [];
+    return res.json();
+  }
+
+  async function adminListLicenses() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/bot_licenses?select=*&order=activated_at.desc`, {
+      headers: authHeaders(true),
+    });
+    if (!res.ok) return [];
+    return res.json();
+  }
+
+  async function adminRevokeLicense(chatId, reason = "cancelled") {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/revoke_bot_license`, {
+      method: "POST",
+      headers: authHeaders(true),
+      body: JSON.stringify({ p_chat_id: chatId, p_reason: reason }),
+    });
+    return res.ok;
+  }
+
   window.StakoSupabase = {
     joinWaitlist, getWaitlistCount,
     signIn, signOut, currentUser, isAdmin,
     adminListWaitlist, adminDeleteWaitlist,
     adminListBotPurchases, adminUpdateBotPurchase,
     adminListBookPurchases,
+    adminGenActivationCode, adminListActivationCodes,
+    adminListLicenses, adminRevokeLicense,
     SUPABASE_URL,
   };
 })();

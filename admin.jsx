@@ -107,16 +107,22 @@ function Dashboard({ user, onLogout, theme, setTheme }) {
   const [waitlist, setWaitlist] = useState([]);
   const [bot, setBot] = useState([]);
   const [books, setBooks] = useState([]);
+  const [licenses, setLicenses] = useState([]);
+  const [codes, setCodes] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const reload = async () => {
     setLoading(true);
-    const [w, b, k] = await Promise.all([
+    const [w, b, k, lic, cod] = await Promise.all([
       window.StakoSupabase.adminListWaitlist(),
       window.StakoSupabase.adminListBotPurchases(),
       window.StakoSupabase.adminListBookPurchases(),
+      window.StakoSupabase.adminListLicenses(),
+      window.StakoSupabase.adminListActivationCodes(),
     ]);
-    setWaitlist(w); setBot(b); setBooks(k); setLoading(false);
+    setWaitlist(w); setBot(b); setBooks(k);
+    setLicenses(lic); setCodes(cod);
+    setLoading(false);
   };
   useEffect(() => { reload(); }, []);
 
@@ -124,6 +130,7 @@ function Dashboard({ user, onLogout, theme, setTheme }) {
     { id: "overview", label: "Resumen" },
     { id: "waitlist", label: `Waitlist · ${waitlist.length}` },
     { id: "bot", label: `Bot · ${bot.length}` },
+    { id: "licenses", label: `Licencias · ${licenses.filter((l) => l.status === "active").length}` },
     { id: "books", label: `Libros · ${books.length}` },
   ];
 
@@ -162,7 +169,8 @@ function Dashboard({ user, onLogout, theme, setTheme }) {
           <>
             {tab === "overview" && <Overview waitlist={waitlist} bot={bot} books={books} onJump={setTab} />}
             {tab === "waitlist" && <WaitlistTable rows={waitlist} onChange={reload} />}
-            {tab === "bot" && <BotTable rows={bot} onChange={reload} />}
+            {tab === "bot" && <BotTable rows={bot} codes={codes} onChange={reload} />}
+            {tab === "licenses" && <LicensesTable rows={licenses} onChange={reload} />}
             {tab === "books" && <BookTable rows={books} />}
           </>
         )}
@@ -342,11 +350,39 @@ function WaitlistTable({ rows, onChange }) {
 }
 
 /* ===== Bot Purchases Table ===== */
-function BotTable({ rows, onChange }) {
+function BotTable({ rows, codes = [], onChange }) {
+  const [generating, setGenerating] = useState(null); // purchase_id en proceso
+  const [shownCode, setShownCode] = useState(null);   // { purchaseId, code }
+
   const setStatus = async (id, status) => {
     await window.StakoSupabase.adminUpdateBotPurchase(id, { status });
     onChange();
   };
+
+  const codesByPurchase = useMemo(() => {
+    const m = {};
+    for (const c of codes) {
+      (m[c.purchase_id] ||= []).push(c);
+    }
+    return m;
+  }, [codes]);
+
+  const generateCode = async (purchaseId) => {
+    setGenerating(purchaseId);
+    const r = await window.StakoSupabase.adminGenActivationCode(purchaseId);
+    setGenerating(null);
+    if (r.ok) {
+      setShownCode({ purchaseId, code: r.code });
+      onChange();
+    } else {
+      alert("Error: " + r.message);
+    }
+  };
+
+  const copyCode = async (code) => {
+    try { await navigator.clipboard.writeText(code); } catch (_) {}
+  };
+
   return (
     <div className="adm-section">
       <header className="adm-section__head">
@@ -354,14 +390,14 @@ function BotTable({ rows, onChange }) {
           <div className="eyebrow">— Bot de trading</div>
           <h2 className="display adm-h2">{rows.length} usuarios del bot</h2>
           <p className="text-muted" style={{ marginTop: 8 }}>
-            Cuando empieces a vender el bot, las compras aparecerán aquí. Puedes activar, cancelar o banear desde aquí.
+            Cuando una compra esté <span className="mono">active</span>, genera un código y envíaselo al cliente. Lo canjea con <span className="mono">/activar STK-XXXX-YYYY</span> en el bot.
           </p>
         </div>
       </header>
       <div className="adm-table-wrap">
         <table className="adm-table">
           <thead>
-            <tr><th>Email</th><th>Importe</th><th>Estado</th><th>Binance UID</th><th>Notas</th><th>Fecha</th><th>Acciones</th></tr>
+            <tr><th>Email</th><th>Importe</th><th>Estado</th><th>Código / Vinculación</th><th>Notas</th><th>Fecha</th><th>Acciones</th></tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
@@ -369,19 +405,103 @@ function BotTable({ rows, onChange }) {
                 Aún no hay usuarios del bot.<br/>
                 <span className="text-dim mono" style={{ fontSize: 11 }}>(la tabla está lista para cuando lancéis las ventas)</span>
               </td></tr>
+            ) : rows.map((r) => {
+              const cs = codesByPurchase[r.id] || [];
+              const unused = cs.find((c) => !c.used_at);
+              const used = cs.find((c) => c.used_at);
+              const isShown = shownCode?.purchaseId === r.id;
+              return (
+                <tr key={r.id}>
+                  <td className="adm-mono">{r.user_email}</td>
+                  <td className="mono num-tab">€{Number(r.amount_eur || 0).toFixed(2)}</td>
+                  <td><StatusBadge s={r.status} /></td>
+                  <td className="mono" style={{ fontSize: 12 }}>
+                    {r.linked_chat_id ? (
+                      <span style={{ color: "var(--accent)" }}>✓ chat_id <span className="text-dim">{r.linked_chat_id}</span></span>
+                    ) : isShown ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ background: "var(--bg-elev)", padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>{shownCode.code}</span>
+                        <button className="adm-link" onClick={() => copyCode(shownCode.code)} title="Copiar">⧉</button>
+                      </div>
+                    ) : unused ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span className="text-muted">{unused.code}</span>
+                        <button className="adm-link" onClick={() => copyCode(unused.code)} title="Copiar">⧉</button>
+                      </div>
+                    ) : used ? (
+                      <span className="text-muted">usado · {new Date(used.used_at).toLocaleDateString("es-ES")}</span>
+                    ) : (
+                      <span className="text-dim">—</span>
+                    )}
+                  </td>
+                  <td className="text-muted">{r.notes || "—"}</td>
+                  <td className="text-muted mono num-tab">{new Date(r.created_at).toLocaleDateString("es-ES")}</td>
+                  <td>
+                    <div className="adm-actions">
+                      {r.status === "active" && !unused && !r.linked_chat_id && (
+                        <button className="adm-link" disabled={generating === r.id} onClick={() => generateCode(r.id)}>
+                          {generating === r.id ? "..." : "🔑 Código"}
+                        </button>
+                      )}
+                      {r.status !== "active" && <button className="adm-link" onClick={() => setStatus(r.id, "active")}>Activar</button>}
+                      {r.status !== "cancelled" && <button className="adm-link" onClick={() => setStatus(r.id, "cancelled")}>Cancelar</button>}
+                      {r.status !== "banned" && <button className="adm-link-danger" onClick={() => setStatus(r.id, "banned")}>Banear</button>}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ===== Licenses Table ===== */
+function LicensesTable({ rows, onChange }) {
+  const revoke = async (chatId, reason) => {
+    if (!confirm(`¿Seguro que quieres ${reason === "banned" ? "BANEAR" : "cancelar"} esta licencia? El bot dejará de operarle en menos de 60s.`)) return;
+    const ok = await window.StakoSupabase.adminRevokeLicense(chatId, reason);
+    if (ok) onChange();
+    else alert("No se pudo revocar.");
+  };
+
+  const active = rows.filter((r) => r.status === "active").length;
+
+  return (
+    <div className="adm-section">
+      <header className="adm-section__head">
+        <div>
+          <div className="eyebrow">— Licencias del bot</div>
+          <h2 className="display adm-h2">{active} licencias activas <span className="text-dim" style={{ fontSize: 14, fontWeight: 400 }}>· {rows.length} totales</span></h2>
+          <p className="text-muted" style={{ marginTop: 8 }}>
+            Vinculaciones activas entre compras y cuentas de Telegram. Si revocas, el bot deja de operar a ese cliente en máximo 60s.
+          </p>
+        </div>
+      </header>
+      <div className="adm-table-wrap">
+        <table className="adm-table">
+          <thead>
+            <tr><th>Email</th><th>chat_id</th><th>Estado</th><th>Activada</th><th>Caduca</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr><td colSpan={6} className="adm-empty">
+                Sin licencias activadas todavía.<br/>
+                <span className="text-dim mono" style={{ fontSize: 11 }}>(aparecerán cuando los clientes canjeen sus códigos)</span>
+              </td></tr>
             ) : rows.map((r) => (
               <tr key={r.id}>
                 <td className="adm-mono">{r.user_email}</td>
-                <td className="mono num-tab">€{Number(r.amount_eur || 0).toFixed(2)}</td>
+                <td className="mono text-muted">{r.chat_id}</td>
                 <td><StatusBadge s={r.status} /></td>
-                <td className="text-muted mono">{r.binance_uid || "—"}</td>
-                <td className="text-muted">{r.notes || "—"}</td>
-                <td className="text-muted mono num-tab">{new Date(r.created_at).toLocaleDateString("es-ES")}</td>
+                <td className="text-muted mono num-tab">{new Date(r.activated_at).toLocaleDateString("es-ES")}</td>
+                <td className="text-muted mono num-tab">{r.expires_at ? new Date(r.expires_at).toLocaleDateString("es-ES") : "—"}</td>
                 <td>
                   <div className="adm-actions">
-                    {r.status !== "active" && <button className="adm-link" onClick={() => setStatus(r.id, "active")}>Activar</button>}
-                    {r.status !== "cancelled" && <button className="adm-link" onClick={() => setStatus(r.id, "cancelled")}>Cancelar</button>}
-                    {r.status !== "banned" && <button className="adm-link-danger" onClick={() => setStatus(r.id, "banned")}>Banear</button>}
+                    {r.status === "active" && <button className="adm-link" onClick={() => revoke(r.chat_id, "cancelled")}>Cancelar</button>}
+                    {r.status !== "banned" && <button className="adm-link-danger" onClick={() => revoke(r.chat_id, "banned")}>Banear</button>}
                   </div>
                 </td>
               </tr>
