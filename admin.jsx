@@ -189,6 +189,16 @@ function Overview({ waitlist, bot, books, onJump }) {
   const bookRevenue = books.reduce((s, r) => s + Number(r.amount_eur || 0), 0);
   const total = botRevenue + bookRevenue;
 
+  // Suscripciones que vencen pronto
+  const expiringSoon = useMemo(() => {
+    const now = Date.now();
+    return bot
+      .filter((r) => r.status === "active" && r.expires_at)
+      .map((r) => ({ ...r, _days: Math.floor((new Date(r.expires_at) - now) / 86400000) }))
+      .filter((r) => r._days <= 7)
+      .sort((a, b) => a._days - b._days);
+  }, [bot]);
+
   // Recent activity (mix waitlist + purchases)
   const activity = [
     ...waitlist.slice(0, 5).map((r) => ({ type: "waitlist", at: r.created_at, label: r.email })),
@@ -204,6 +214,34 @@ function Overview({ waitlist, bot, books, onJump }) {
           <h2 className="display adm-h2">Estado del negocio</h2>
         </div>
       </header>
+
+      {expiringSoon.length > 0 && (
+        <div className="adm-alert adm-alert--warn">
+          <div className="adm-alert__head">
+            <strong>⚠ {expiringSoon.length} suscripcion{expiringSoon.length === 1 ? "" : "es"} vencen pronto</strong>
+            <button className="adm-link adm-link--primary" onClick={() => onJump("bot")}>Ver todas →</button>
+          </div>
+          <ul className="adm-alert__list">
+            {expiringSoon.slice(0, 5).map((r) => (
+              <li key={r.id}>
+                <span className="adm-mono">{r.user_email}</span>
+                <span className="text-muted mono"> · </span>
+                {r._days < 0 ? (
+                  <span style={{ color: "var(--danger)" }}>vencida hace {-r._days}d</span>
+                ) : r._days === 0 ? (
+                  <span style={{ color: "var(--gold)" }}>vence hoy</span>
+                ) : (
+                  <span style={{ color: "var(--gold)" }}>vence en {r._days}d</span>
+                )}
+                <span className="text-dim mono"> · {fmtDate(r.expires_at)}</span>
+              </li>
+            ))}
+            {expiringSoon.length > 5 && (
+              <li className="text-dim mono" style={{ fontSize: 12 }}>… y {expiringSoon.length - 5} más</li>
+            )}
+          </ul>
+        </div>
+      )}
 
       <div className="kpi-grid">
         <Kpi label="Lista de espera" value={waitlist.length} delta={`+${newThisWeek} esta semana`} accent="green" onClick={() => onJump("waitlist")} />
@@ -299,12 +337,279 @@ function relTime(iso) {
   return Math.floor(diff/86400) + "d";
 }
 
+/* ===== Helpers de fecha ===== */
+function daysFromNow(dateIso) {
+  if (!dateIso) return null;
+  const ms = new Date(dateIso) - Date.now();
+  return Math.floor(ms / 86400000);
+}
+function fmtDate(dateIso) {
+  if (!dateIso) return "—";
+  return new Date(dateIso).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+}
+function fmtDateInput(dateIso) {
+  // YYYY-MM-DD para <input type="date">
+  if (!dateIso) return "";
+  const d = new Date(dateIso);
+  return d.toISOString().slice(0, 10);
+}
+function ExpiresPill({ expiresAt, status }) {
+  if (status === "cancelled") return <span className="exp-pill exp-pill--off">Cancelada</span>;
+  if (status === "banned") return <span className="exp-pill exp-pill--err">Baneada</span>;
+  if (!expiresAt) return <span className="exp-pill exp-pill--off">Sin fecha</span>;
+  const d = daysFromNow(expiresAt);
+  if (d < 0) return <span className="exp-pill exp-pill--err">Vencida hace {-d}d</span>;
+  if (d === 0) return <span className="exp-pill exp-pill--warn">Vence hoy</span>;
+  if (d <= 7)  return <span className="exp-pill exp-pill--warn">{d}d</span>;
+  return <span className="exp-pill exp-pill--ok">{d}d</span>;
+}
+
+/* ===== Modal genérico ===== */
+function AdminModal({ title, subtitle, onClose, children, footer, wide }) {
+  return (
+    <div className="adm-modal-bd" onClick={onClose}>
+      <div className={`adm-modal-card ${wide ? "adm-modal-card--wide" : ""}`} onClick={(e) => e.stopPropagation()}>
+        <button className="adm-modal-close" onClick={onClose}>✕</button>
+        <div className="eyebrow">— Stako · admin</div>
+        <h2 className="display" style={{ fontSize: 26, margin: "8px 0 4px" }}>{title}</h2>
+        {subtitle && <p className="text-muted" style={{ marginBottom: 22, fontSize: 14 }}>{subtitle}</p>}
+        <div>{children}</div>
+        {footer && <div className="adm-modal-footer">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ===== Modal: Convertir waitlist en cliente / Crear suscripción ===== */
+function ConvertModal({ row, onClose, onCreated }) {
+  // row = entrada de waitlist (puede ser null si es nueva suscripción manual)
+  const [email, setEmail]   = useState(row?.email || "");
+  const [amount, setAmount] = useState("39.00");
+  const [months, setMonths] = useState(1);
+  const [pmethod, setPmethod] = useState("Bizum");
+  const [notes, setNotes]   = useState("");
+  const [busy, setBusy]     = useState(false);
+  const [err, setErr]       = useState("");
+  const [result, setResult] = useState(null); // { code, expires_at, purchase_id }
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr(""); setBusy(true);
+    const r = await window.StakoSupabase.adminCreateSubscription({
+      email: email.trim(),
+      amount_eur: Number(amount) || 0,
+      payment_method: pmethod,
+      months: Number(months),
+      notes: notes.trim() || null,
+      waitlist_id: row?.id || null,
+    });
+    setBusy(false);
+    if (r.ok) { setResult(r); onCreated && onCreated(); }
+    else setErr(r.message || "Error");
+  };
+  const copy = async (txt) => { try { await navigator.clipboard.writeText(txt); } catch (_) {} };
+  const mailto = () => {
+    if (!result) return;
+    const subj = encodeURIComponent("Tu acceso al Bot Stako");
+    const body = encodeURIComponent(
+`Hola,
+
+Aquí tienes tu código de activación para el bot de trading de Stako:
+
+  ${result.code}
+
+Pasos:
+1. Abre @StakoTradingBot en Telegram (https://t.me/StakoTradingBot)
+2. Envía: /activar ${result.code}
+3. Sigue las instrucciones para conectar tu cuenta de Binance
+
+Tu suscripción es válida hasta el ${fmtDate(result.expires_at)}.
+
+Cualquier duda, respóndeme a este email.
+
+— Stako`
+    );
+    window.location.href = `mailto:${encodeURIComponent(email)}?subject=${subj}&body=${body}`;
+  };
+
+  if (result) {
+    return (
+      <AdminModal
+        title="🎉 Suscripción creada"
+        subtitle={`Cliente: ${email} · Vence el ${fmtDate(result.expires_at)}`}
+        onClose={onClose}
+      >
+        <div className="adm-code-box">
+          <div className="text-muted" style={{ fontSize: 13, marginBottom: 10 }}>Código de activación (envíaselo al cliente):</div>
+          <div className="adm-code">
+            <span className="mono">{result.code}</span>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => copy(result.code)}>Copiar</button>
+          </div>
+        </div>
+        <div className="adm-modal-footer" style={{ marginTop: 24 }}>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>Cerrar</button>
+          <button type="button" className="btn btn-primary" onClick={mailto}>Mandar email al cliente</button>
+        </div>
+      </AdminModal>
+    );
+  }
+
+  return (
+    <AdminModal
+      title={row ? "Convertir en cliente" : "Nueva suscripción manual"}
+      subtitle={row ? `Marcando ${row.email} como pagado y generando código.` : "Crea una suscripción para alguien que no estaba en waitlist."}
+      onClose={onClose}
+    >
+      <form onSubmit={submit} className="adm-form">
+        <label className="adm-form__label">
+          <span>Email del cliente</span>
+          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={busy || !!row} />
+        </label>
+        <div className="adm-form__row">
+          <label className="adm-form__label" style={{ flex: 1 }}>
+            <span>Importe (€)</span>
+            <input type="number" step="0.01" min="0" required value={amount} onChange={(e) => setAmount(e.target.value)} disabled={busy} />
+          </label>
+          <label className="adm-form__label" style={{ flex: 1 }}>
+            <span>Duración (meses)</span>
+            <select value={months} onChange={(e) => setMonths(Number(e.target.value))} disabled={busy}>
+              <option value="1">1 mes</option>
+              <option value="3">3 meses</option>
+              <option value="6">6 meses</option>
+              <option value="12">12 meses</option>
+            </select>
+          </label>
+        </div>
+        <label className="adm-form__label">
+          <span>Método de pago</span>
+          <select value={pmethod} onChange={(e) => setPmethod(e.target.value)} disabled={busy}>
+            <option>Bizum</option>
+            <option>Transferencia</option>
+            <option>PayPal</option>
+            <option>Efectivo</option>
+            <option>Otro</option>
+          </select>
+        </label>
+        <label className="adm-form__label">
+          <span>Notas internas (opcional)</span>
+          <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} disabled={busy}
+                    placeholder="Ej: amigo personal, periodo de prueba, etc." />
+        </label>
+        {err && <div className="modal-err">{err}</div>}
+        <div className="adm-modal-footer">
+          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button type="submit" className="btn btn-primary" disabled={busy || !email}>
+            {busy ? "Creando…" : "Crear suscripción y código"}
+          </button>
+        </div>
+      </form>
+    </AdminModal>
+  );
+}
+
+/* ===== Modal: Renovar suscripción ===== */
+function RenewModal({ row, onClose, onDone }) {
+  const [months, setMonths] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr(""); setBusy(true);
+    const r = await window.StakoSupabase.adminRenewSubscription(row.id, Number(months));
+    setBusy(false);
+    if (r.ok) { onDone(); onClose(); }
+    else setErr(r.message || "Error");
+  };
+  const baseDate = row.expires_at && new Date(row.expires_at) > new Date() ? row.expires_at : new Date().toISOString();
+  const newDate = new Date(baseDate);
+  newDate.setMonth(newDate.getMonth() + Number(months));
+  return (
+    <AdminModal
+      title="Renovar suscripción"
+      subtitle={`${row.user_email} · vence ${fmtDate(row.expires_at)}`}
+      onClose={onClose}
+    >
+      <form onSubmit={submit} className="adm-form">
+        <label className="adm-form__label">
+          <span>Añadir tiempo</span>
+          <select value={months} onChange={(e) => setMonths(Number(e.target.value))} disabled={busy} autoFocus>
+            <option value="1">+1 mes</option>
+            <option value="3">+3 meses</option>
+            <option value="6">+6 meses</option>
+            <option value="12">+12 meses</option>
+          </select>
+        </label>
+        <div className="adm-info-box">
+          <strong>Nueva fecha de renovación:</strong> {fmtDate(newDate)}
+          {daysFromNow(row.expires_at) < 0 && (
+            <div className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>
+              (Estaba vencida — la renovación se cuenta desde hoy)
+            </div>
+          )}
+        </div>
+        {err && <div className="modal-err">{err}</div>}
+        <div className="adm-modal-footer">
+          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button type="submit" className="btn btn-primary" disabled={busy}>
+            {busy ? "Renovando…" : "Renovar"}
+          </button>
+        </div>
+      </form>
+    </AdminModal>
+  );
+}
+
+/* ===== Modal: Editar fecha de expiración manualmente ===== */
+function EditDateModal({ row, onClose, onDone }) {
+  const [date, setDate] = useState(fmtDateInput(row.expires_at));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr(""); setBusy(true);
+    const iso = new Date(date + "T23:59:59").toISOString();
+    const r = await window.StakoSupabase.adminSetExpiresAt(row.id, iso);
+    setBusy(false);
+    if (r.ok) { onDone(); onClose(); }
+    else setErr(r.message || "Error");
+  };
+  return (
+    <AdminModal title="Editar fecha de expiración" subtitle={row.user_email} onClose={onClose}>
+      <form onSubmit={submit} className="adm-form">
+        <label className="adm-form__label">
+          <span>Vence el</span>
+          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} disabled={busy} autoFocus />
+        </label>
+        {err && <div className="modal-err">{err}</div>}
+        <div className="adm-modal-footer">
+          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button type="submit" className="btn btn-primary" disabled={busy}>
+            {busy ? "Guardando…" : "Guardar fecha"}
+          </button>
+        </div>
+      </form>
+    </AdminModal>
+  );
+}
+
 /* ===== Waitlist Table ===== */
 function WaitlistTable({ rows, onChange }) {
   const [q, setQ] = useState("");
-  const filtered = useMemo(() => rows.filter((r) => !q || (r.email || "").toLowerCase().includes(q.toLowerCase())), [rows, q]);
+  const [filter, setFilter] = useState("pending"); // pending | converted | all
+  const [convertRow, setConvertRow] = useState(null);
+
+  const filtered = useMemo(() => rows.filter((r) => {
+    if (filter === "pending"   && r.converted_at) return false;
+    if (filter === "converted" && !r.converted_at) return false;
+    if (q && !(r.email || "").toLowerCase().includes(q.toLowerCase())) return false;
+    return true;
+  }), [rows, q, filter]);
+
+  const pendingCount = rows.filter((r) => !r.converted_at).length;
+  const convertedCount = rows.length - pendingCount;
+
   const exportCSV = () => {
-    const csv = ["email,lang,source,created_at", ...rows.map((r) => `${r.email},${r.lang||""},${r.source||""},${r.created_at}`)].join("\n");
+    const csv = ["email,lang,source,created_at,converted_at", ...rows.map((r) => `${r.email},${r.lang||""},${r.source||""},${r.created_at},${r.converted_at||""}`)].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "waitlist.csv"; a.click();
   };
@@ -318,33 +623,63 @@ function WaitlistTable({ rows, onChange }) {
       <header className="adm-section__head">
         <div>
           <div className="eyebrow">— Lista de espera</div>
-          <h2 className="display adm-h2">{rows.length} emails apuntados</h2>
+          <h2 className="display adm-h2">{pendingCount} pendientes <span className="text-dim" style={{ fontSize: 14, fontWeight: 400 }}>· {convertedCount} convertidos · {rows.length} totales</span></h2>
         </div>
         <div className="adm-section__actions">
-          <input className="input" placeholder="Buscar email…" value={q} onChange={(e) => setQ(e.target.value)} style={{ minWidth: 240 }} />
+          <div className="adm-segmented">
+            <button className={filter === "pending" ? "is-active" : ""} onClick={() => setFilter("pending")}>Pendientes</button>
+            <button className={filter === "converted" ? "is-active" : ""} onClick={() => setFilter("converted")}>Convertidos</button>
+            <button className={filter === "all" ? "is-active" : ""} onClick={() => setFilter("all")}>Todos</button>
+          </div>
+          <input className="input" placeholder="Buscar email…" value={q} onChange={(e) => setQ(e.target.value)} style={{ minWidth: 220 }} />
           <button className="btn btn-ghost btn-sm" onClick={exportCSV}>Exportar CSV</button>
         </div>
       </header>
       <div className="adm-table-wrap">
         <table className="adm-table">
           <thead>
-            <tr><th>Email</th><th>Idioma</th><th>Fuente</th><th>Fecha</th><th></th></tr>
+            <tr><th>Email</th><th>Idioma</th><th>Fuente</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={5} className="adm-empty">Sin resultados.</td></tr>
+              <tr><td colSpan={6} className="adm-empty">Sin resultados.</td></tr>
             ) : filtered.map((r) => (
               <tr key={r.id}>
                 <td className="adm-mono">{r.email}</td>
                 <td><span className="tag">{r.lang || "—"}</span></td>
                 <td className="text-muted mono">{r.source || "—"}</td>
-                <td className="text-muted mono num-tab">{new Date(r.created_at).toLocaleString("es-ES")}</td>
-                <td><button className="adm-link-danger" onClick={() => del(r.id, r.email)}>Eliminar</button></td>
+                <td>
+                  {r.converted_at ? (
+                    <span className="exp-pill exp-pill--ok" title={`Convertido el ${fmtDate(r.converted_at)}`}>
+                      ✓ Cliente
+                    </span>
+                  ) : (
+                    <span className="exp-pill exp-pill--warn">Pendiente</span>
+                  )}
+                </td>
+                <td className="text-muted mono num-tab">{new Date(r.created_at).toLocaleDateString("es-ES")}</td>
+                <td>
+                  <div className="adm-actions">
+                    {!r.converted_at && (
+                      <button className="adm-link adm-link--primary" onClick={() => setConvertRow(r)}>
+                        💳 Convertir
+                      </button>
+                    )}
+                    <button className="adm-link-danger" onClick={() => del(r.id, r.email)}>Eliminar</button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {convertRow && (
+        <ConvertModal
+          row={convertRow}
+          onClose={() => setConvertRow(null)}
+          onCreated={() => onChange()}
+        />
+      )}
     </div>
   );
 }
@@ -352,7 +687,12 @@ function WaitlistTable({ rows, onChange }) {
 /* ===== Bot Purchases Table ===== */
 function BotTable({ rows, codes = [], onChange }) {
   const [generating, setGenerating] = useState(null); // purchase_id en proceso
-  const [shownCode, setShownCode] = useState(null);   // { purchaseId, code }
+  const [shownCode, setShownCode]   = useState(null);   // { purchaseId, code }
+  const [filter, setFilter]         = useState("active"); // active | expiring | expired | cancelled | all
+  const [q, setQ]                   = useState("");
+  const [renewRow, setRenewRow]     = useState(null);
+  const [editDateRow, setEditDateRow] = useState(null);
+  const [createNew, setCreateNew]   = useState(false);
 
   const setStatus = async (id, status) => {
     await window.StakoSupabase.adminUpdateBotPurchase(id, { status });
@@ -361,26 +701,74 @@ function BotTable({ rows, codes = [], onChange }) {
 
   const codesByPurchase = useMemo(() => {
     const m = {};
-    for (const c of codes) {
-      (m[c.purchase_id] ||= []).push(c);
-    }
+    for (const c of codes) (m[c.purchase_id] ||= []).push(c);
     return m;
   }, [codes]);
+
+  const filtered = useMemo(() => {
+    const now = Date.now();
+    const sorted = [...rows].sort((a, b) => {
+      // Activas con expires_at asc primero (las que vencen antes)
+      const aActive = a.status === "active";
+      const bActive = b.status === "active";
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      const ae = a.expires_at ? new Date(a.expires_at).getTime() : Infinity;
+      const be = b.expires_at ? new Date(b.expires_at).getTime() : Infinity;
+      return ae - be;
+    });
+    return sorted.filter((r) => {
+      if (q && !(r.user_email || "").toLowerCase().includes(q.toLowerCase())) return false;
+      const exp = r.expires_at ? new Date(r.expires_at).getTime() : null;
+      const daysLeft = exp != null ? Math.floor((exp - now) / 86400000) : null;
+      if (filter === "active")     return r.status === "active" && (daysLeft == null || daysLeft >= 0);
+      if (filter === "expiring")   return r.status === "active" && daysLeft != null && daysLeft >= 0 && daysLeft <= 7;
+      if (filter === "expired")    return r.status === "active" && daysLeft != null && daysLeft < 0;
+      if (filter === "cancelled")  return r.status === "cancelled" || r.status === "banned";
+      return true; // all
+    });
+  }, [rows, q, filter]);
+
+  const counts = useMemo(() => {
+    const now = Date.now();
+    let active = 0, expiring = 0, expired = 0, cancelled = 0;
+    for (const r of rows) {
+      const exp = r.expires_at ? new Date(r.expires_at).getTime() : null;
+      const daysLeft = exp != null ? Math.floor((exp - now) / 86400000) : null;
+      if (r.status === "active") {
+        if (daysLeft == null || daysLeft >= 0) active++;
+        if (daysLeft != null && daysLeft >= 0 && daysLeft <= 7) expiring++;
+        if (daysLeft != null && daysLeft < 0) expired++;
+      } else if (r.status === "cancelled" || r.status === "banned") cancelled++;
+    }
+    return { active, expiring, expired, cancelled };
+  }, [rows]);
 
   const generateCode = async (purchaseId) => {
     setGenerating(purchaseId);
     const r = await window.StakoSupabase.adminGenActivationCode(purchaseId);
     setGenerating(null);
-    if (r.ok) {
-      setShownCode({ purchaseId, code: r.code });
-      onChange();
-    } else {
-      alert("Error: " + r.message);
-    }
+    if (r.ok) { setShownCode({ purchaseId, code: r.code }); onChange(); }
+    else alert("Error: " + r.message);
   };
+  const copyCode = async (code) => { try { await navigator.clipboard.writeText(code); } catch (_) {} };
+  const sendEmail = (row, code) => {
+    const subj = encodeURIComponent("Tu acceso al Bot Stako");
+    const body = encodeURIComponent(
+`Hola,
 
-  const copyCode = async (code) => {
-    try { await navigator.clipboard.writeText(code); } catch (_) {}
+Aquí tienes tu código de activación para el bot de trading de Stako:
+
+  ${code}
+
+Pasos:
+1. Abre @StakoTradingBot en Telegram (https://t.me/StakoTradingBot)
+2. Envía: /activar ${code}
+3. Sigue las instrucciones para conectar tu cuenta de Binance
+
+Tu suscripción es válida hasta el ${fmtDate(row.expires_at)}.
+
+— Stako`);
+    window.location.href = `mailto:${encodeURIComponent(row.user_email)}?subject=${subj}&body=${body}`;
   };
 
   return (
@@ -388,64 +776,110 @@ function BotTable({ rows, codes = [], onChange }) {
       <header className="adm-section__head">
         <div>
           <div className="eyebrow">— Bot de trading</div>
-          <h2 className="display adm-h2">{rows.length} usuarios del bot</h2>
+          <h2 className="display adm-h2">{counts.active} suscripciones activas</h2>
           <p className="text-muted" style={{ marginTop: 8 }}>
-            Cuando una compra esté <span className="mono">active</span>, genera un código y envíaselo al cliente. Lo canjea con <span className="mono">/activar STK-XXXX-YYYY</span> en el bot.
+            {counts.expiring > 0 && <span style={{ color: "var(--gold)" }}>⚠ {counts.expiring} vencen en menos de 7 días · </span>}
+            {counts.expired > 0  && <span style={{ color: "var(--danger)" }}>{counts.expired} vencidas · </span>}
+            {counts.cancelled} canceladas/baneadas.
           </p>
         </div>
+        <div className="adm-section__actions">
+          <button className="btn btn-primary btn-sm" onClick={() => setCreateNew(true)}>+ Nueva suscripción</button>
+        </div>
       </header>
+
+      <div className="adm-section__actions" style={{ marginTop: 8, marginBottom: 16, justifyContent: "space-between" }}>
+        <div className="adm-segmented">
+          <button className={filter === "active" ? "is-active" : ""} onClick={() => setFilter("active")}>Activas · {counts.active}</button>
+          <button className={filter === "expiring" ? "is-active" : ""} onClick={() => setFilter("expiring")}>Vencen pronto · {counts.expiring}</button>
+          <button className={filter === "expired" ? "is-active" : ""} onClick={() => setFilter("expired")}>Vencidas · {counts.expired}</button>
+          <button className={filter === "cancelled" ? "is-active" : ""} onClick={() => setFilter("cancelled")}>Canceladas · {counts.cancelled}</button>
+          <button className={filter === "all" ? "is-active" : ""} onClick={() => setFilter("all")}>Todas · {rows.length}</button>
+        </div>
+        <input className="input" placeholder="Buscar email…" value={q} onChange={(e) => setQ(e.target.value)} style={{ minWidth: 220 }} />
+      </div>
+
       <div className="adm-table-wrap">
         <table className="adm-table">
           <thead>
-            <tr><th>Email</th><th>Importe</th><th>Estado</th><th>Código / Vinculación</th><th>Notas</th><th>Fecha</th><th>Acciones</th></tr>
+            <tr>
+              <th>Email</th>
+              <th>Importe</th>
+              <th>Vence / Restante</th>
+              <th>Pago</th>
+              <th>Estado</th>
+              <th>Telegram / Código</th>
+              <th>Acciones</th>
+            </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {filtered.length === 0 ? (
               <tr><td colSpan={7} className="adm-empty">
-                Aún no hay usuarios del bot.<br/>
-                <span className="text-dim mono" style={{ fontSize: 11 }}>(la tabla está lista para cuando lancéis las ventas)</span>
+                {rows.length === 0 ? (
+                  <>Aún no hay suscripciones.<br/>
+                    <button className="btn btn-primary btn-sm" style={{ marginTop: 12 }} onClick={() => setCreateNew(true)}>Crear la primera</button>
+                  </>
+                ) : "Sin resultados con este filtro."}
               </td></tr>
-            ) : rows.map((r) => {
+            ) : filtered.map((r) => {
               const cs = codesByPurchase[r.id] || [];
               const unused = cs.find((c) => !c.used_at);
               const used = cs.find((c) => c.used_at);
               const isShown = shownCode?.purchaseId === r.id;
+              const codeToShow = isShown ? shownCode.code : (unused?.code || null);
               return (
                 <tr key={r.id}>
-                  <td className="adm-mono">{r.user_email}</td>
+                  <td className="adm-mono">
+                    {r.user_email}
+                    {r.notes && (
+                      <div className="text-dim" style={{ fontSize: 11, marginTop: 3 }} title={r.notes}>
+                        {r.notes.length > 40 ? r.notes.slice(0,40) + "…" : r.notes}
+                      </div>
+                    )}
+                  </td>
                   <td className="mono num-tab">€{Number(r.amount_eur || 0).toFixed(2)}</td>
+                  <td>
+                    <div className="mono num-tab" style={{ fontSize: 13 }}>{fmtDate(r.expires_at)}</div>
+                    <div style={{ marginTop: 4 }}>
+                      <ExpiresPill expiresAt={r.expires_at} status={r.status} />
+                      {r.cancel_at_period_end && r.status === "active" && (
+                        <span className="exp-pill exp-pill--warn" style={{ marginLeft: 6 }}>cancelada al final</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="text-muted mono" style={{ fontSize: 12 }}>{r.payment_method || "—"}</td>
                   <td><StatusBadge s={r.status} /></td>
                   <td className="mono" style={{ fontSize: 12 }}>
                     {r.linked_chat_id ? (
                       <span style={{ color: "var(--accent)" }}>✓ chat_id <span className="text-dim">{r.linked_chat_id}</span></span>
-                    ) : isShown ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ background: "var(--bg-elev)", padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>{shownCode.code}</span>
-                        <button className="adm-link" onClick={() => copyCode(shownCode.code)} title="Copiar">⧉</button>
-                      </div>
-                    ) : unused ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span className="text-muted">{unused.code}</span>
-                        <button className="adm-link" onClick={() => copyCode(unused.code)} title="Copiar">⧉</button>
+                    ) : codeToShow ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <span style={{ background: "var(--bg-elev)", padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>{codeToShow}</span>
+                        <button type="button" className="adm-link" onClick={() => copyCode(codeToShow)} title="Copiar">⧉</button>
+                        <button type="button" className="adm-link" onClick={() => sendEmail(r, codeToShow)} title="Mandar email">✉</button>
                       </div>
                     ) : used ? (
-                      <span className="text-muted">usado · {new Date(used.used_at).toLocaleDateString("es-ES")}</span>
+                      <span className="text-muted">canjeado · {new Date(used.used_at).toLocaleDateString("es-ES")}</span>
                     ) : (
-                      <span className="text-dim">—</span>
+                      <span className="text-dim">sin código</span>
                     )}
                   </td>
-                  <td className="text-muted">{r.notes || "—"}</td>
-                  <td className="text-muted mono num-tab">{new Date(r.created_at).toLocaleDateString("es-ES")}</td>
                   <td>
                     <div className="adm-actions">
-                      {r.status === "active" && !unused && !r.linked_chat_id && (
+                      {r.status === "active" && !codeToShow && !r.linked_chat_id && (
                         <button className="adm-link" disabled={generating === r.id} onClick={() => generateCode(r.id)}>
                           {generating === r.id ? "..." : "🔑 Código"}
                         </button>
                       )}
-                      {r.status !== "active" && <button className="adm-link" onClick={() => setStatus(r.id, "active")}>Activar</button>}
-                      {r.status !== "cancelled" && <button className="adm-link" onClick={() => setStatus(r.id, "cancelled")}>Cancelar</button>}
-                      {r.status !== "banned" && <button className="adm-link-danger" onClick={() => setStatus(r.id, "banned")}>Banear</button>}
+                      {(r.status === "active" || r.status === "cancelled") && (
+                        <button className="adm-link adm-link--primary" onClick={() => setRenewRow(r)}>
+                          🔄 Renovar
+                        </button>
+                      )}
+                      <button className="adm-link" onClick={() => setEditDateRow(r)}>📅 Fecha</button>
+                      {r.status === "active" && <button className="adm-link" onClick={() => setStatus(r.id, "cancelled")}>Cancelar</button>}
+                      {r.status === "cancelled" && <button className="adm-link" onClick={() => setStatus(r.id, "active")}>Reactivar</button>}
+                      {r.status !== "banned" && <button className="adm-link-danger" onClick={() => { if (confirm("¿Banear?")) setStatus(r.id, "banned"); }}>Banear</button>}
                     </div>
                   </td>
                 </tr>
@@ -454,6 +888,10 @@ function BotTable({ rows, codes = [], onChange }) {
           </tbody>
         </table>
       </div>
+
+      {createNew  && <ConvertModal  row={null}     onClose={() => setCreateNew(false)} onCreated={() => onChange()} />}
+      {renewRow   && <RenewModal    row={renewRow} onClose={() => setRenewRow(null)}   onDone={() => onChange()} />}
+      {editDateRow && <EditDateModal row={editDateRow} onClose={() => setEditDateRow(null)} onDone={() => onChange()} />}
     </div>
   );
 }

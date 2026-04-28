@@ -263,6 +263,41 @@
     const code = await res.json();
     return { ok: true, code };
   }
+  async function adminCreateSubscription({ email, amount_eur, payment_method, months, notes, waitlist_id }) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_create_subscription`, {
+      method: "POST", headers: authHeaders(true),
+      body: JSON.stringify({
+        p_email: email,
+        p_amount_eur: amount_eur,
+        p_payment_method: payment_method || null,
+        p_months: months || 1,
+        p_notes: notes || null,
+        p_waitlist_id: waitlist_id || null,
+      }),
+    });
+    if (!res.ok) {
+      let msg = "Error";
+      try { const b = await res.json(); msg = b.message || b.hint || msg; } catch (_) {}
+      return { ok: false, message: msg };
+    }
+    return await res.json();
+  }
+  async function adminRenewSubscription(purchaseId, months) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_renew_subscription`, {
+      method: "POST", headers: authHeaders(true),
+      body: JSON.stringify({ p_purchase_id: purchaseId, p_months: months }),
+    });
+    if (!res.ok) return { ok: false, message: "Error" };
+    return await res.json();
+  }
+  async function adminSetExpiresAt(purchaseId, expiresAt) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_set_expires_at`, {
+      method: "POST", headers: authHeaders(true),
+      body: JSON.stringify({ p_purchase_id: purchaseId, p_expires_at: expiresAt }),
+    });
+    if (!res.ok) return { ok: false, message: "Error" };
+    return await res.json();
+  }
   async function adminListActivationCodes(purchaseId) {
     const url = purchaseId
       ? `${SUPABASE_URL}/rest/v1/bot_activation_codes?select=*&purchase_id=eq.${purchaseId}&order=created_at.desc`
@@ -303,6 +338,7 @@
     adminListBookPurchases,
     adminGenActivationCode, adminListActivationCodes,
     adminListLicenses, adminRevokeLicense,
+    adminCreateSubscription, adminRenewSubscription, adminSetExpiresAt,
     // Constants
     SUPABASE_URL,
   };
