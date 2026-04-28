@@ -1750,3 +1750,29 @@ section { padding-block: clamp(72px, 10vw, 140px); }
   padding: 6px 12px;
   font-size: 13px;
 }
+
+/* cuenta auth (login/signup integrado en página) */
+.cuenta-auth-wrap {
+  display: flex;
+  justify-content: center;
+  padding-top: 40px;
+}
+.cuenta-auth-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 460px;
+  padding: 40px 36px 32px;
+  box-shadow: var(--shadow-card);
+}
+.cuenta-auth-title {
+  font-size: 36px;
+  line-height: 1.1;
+  margin: 8px 0 8px;
+}
+.cuenta-auth-sub {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}

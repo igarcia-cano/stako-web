@@ -284,7 +284,6 @@ function UserDropdown({ user, admin, onLogout }) {
 /* ===== AuthSlot: pone el botón de login O el dropdown de usuario ===== */
 function AuthSlot() {
   const auth = useAuthState();
-  const [showLogin, setShowLogin] = _useState(false);
 
   if (auth.loading) {
     return <div className="auth-slot-skeleton" aria-hidden="true">&nbsp;</div>;
@@ -296,20 +295,12 @@ function AuthSlot() {
     );
   }
 
+  // Sin sesión: enlace directo a la página de cuenta (que muestra login).
+  // Más robusto que un modal in-place con Babel standalone.
   return (
-    <>
-      <button className="btn btn-ghost btn-sm hide-sm" onClick={() => setShowLogin(true)}>
-        Acceso clientes
-      </button>
-      <button className="btn btn-ghost btn-sm show-sm" onClick={() => setShowLogin(true)}>
-        Entrar
-      </button>
-      <LoginModal
-        open={showLogin}
-        onClose={() => setShowLogin(false)}
-        onLoggedIn={() => auth.refresh()}
-      />
-    </>
+    <a href="cuenta.html" className="btn btn-ghost btn-sm">
+      Acceso clientes
+    </a>
   );
 }
 
