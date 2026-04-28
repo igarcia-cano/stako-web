@@ -45,7 +45,7 @@ function HeroViz() {
   const { t, lang } = useApp();
   const live = useCryptoLive();
   const fallbackPoints = useChartData(60);
-  const livePoints = _normalizeToWalk(live.btcKlines, 60);
+  const livePoints = _normalizeToWalk(live.btcKlines, 48);
   const points = livePoints || fallbackPoints;
   const path = pointsToPath(points, 480, 220);
   const last = points[points.length - 1];
@@ -67,7 +67,7 @@ function HeroViz() {
       <div className="viz__chart card">
         <div className="viz__chart-head">
           <div>
-            <div className="eyebrow">BTC/USDT · 1H</div>
+            <div className="eyebrow">BTC/USDT · 24h</div>
             <div className="viz__price mono num-tab">{priceStr}</div>
           </div>
           <div className={`viz__change ${change >= 0 ? "is-up" : "is-down"} mono`}>
@@ -143,7 +143,7 @@ async function _liveFetch() {
   try {
     const symParam = encodeURIComponent(JSON.stringify(STAKO_LIVE_SYMBOLS));
     const [klRes, tkRes] = await Promise.all([
-      fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=60", { cache: "no-store" }),
+      fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=30m&limit=48", { cache: "no-store" }),
       fetch("https://api.binance.com/api/v3/ticker/24hr?symbols=" + symParam, { cache: "no-store" }),
     ]);
     if (!klRes.ok || !tkRes.ok) return;
