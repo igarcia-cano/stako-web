@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Stako — Bot de Trading</title>
+<title>Stako — Mi cuenta</title>
 <link rel="stylesheet" href="styles.css?v=4" />
 </head>
 <body>
@@ -17,20 +17,6 @@
 <script src="supabase-client.js"></script>
 <script type="text/babel" src="shared.jsx"></script>
 <script type="text/babel" src="auth.jsx"></script>
-<script type="text/babel" src="bot-page.jsx"></script>
-<script type="text/babel">
-function App() {
-  return (
-    <AppProvider>
-      <Nav active="bot" />
-      <main>
-        <BotPage />
-      </main>
-      <Footer />
-    </AppProvider>
-  );
-}
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-</script>
+<script type="text/babel" src="cuenta.jsx"></script>
 </body>
 </html>

@@ -169,7 +169,7 @@ function Nav({ active = "home" }) {
         <div className="nav__actions">
           <LangToggle />
           <ThemeToggle />
-          <a href="#" className="btn btn-ghost btn-sm hide-sm">{t.nav.access}</a>
+          <AuthSlot />
           <button
             className="icon-btn show-sm"
             aria-label="Open menu"
@@ -192,7 +192,6 @@ function Nav({ active = "home" }) {
               {l.soon && <span className="nav__soon">{t.nav.soon}</span>}
             </a>
           ))}
-          <a href="#" className="nav__mobile-link">{t.nav.access}</a>
         </div>
       )}
     </header>

@@ -1,5 +1,5 @@
 /* ============================================================
-   STAKO — Supabase client (public + admin)
+   STAKO — Supabase client (public + auth + admin + cliente)
    ============================================================ */
 (function () {
   const SUPABASE_URL = "https://xkctsnwrihrbqvckojix.supabase.co";
@@ -8,12 +8,14 @@
 
   const TOKEN_KEY = "stako-auth";
 
+  /* ========== Token storage ========== */
   function getToken() {
     try {
       const raw = localStorage.getItem(TOKEN_KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (parsed.expires_at && Date.now() / 1000 > parsed.expires_at) {
+        // Try to refresh in the background; for simplicity, just clear
         localStorage.removeItem(TOKEN_KEY);
         return null;
       }
@@ -32,7 +34,7 @@
     };
   }
 
-  // ---------- Public ----------
+  /* ========== Public ========== */
   async function joinWaitlist({ email, lang, source = "landing" }) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
       method: "POST",
@@ -46,11 +48,9 @@
       (typeof body.message === "string" && body.message.toLowerCase().includes("duplicate")));
     return { ok: false, duplicate: dupe, status: res.status, message: (body && (body.message || body.hint)) || "err" };
   }
-
-  // Public count is not possible after locking SELECT. Return null gracefully.
   async function getWaitlistCount() { return null; }
 
-  // ---------- Auth ----------
+  /* ========== Auth ========== */
   async function signIn(email, password) {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       method: "POST",
@@ -64,8 +64,105 @@
     }
     return { ok: false, message: body.error_description || body.msg || body.error || "Login failed" };
   }
+
+  async function signUp(email, password) {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email, password,
+        options: {
+          emailRedirectTo: window.location.origin + "/cuenta.html",
+        },
+      }),
+    });
+    const body = await res.json();
+    if (res.ok) {
+      // Si el proyecto requiere email confirmation, no hay access_token aún
+      if (body.access_token) {
+        setToken(body);
+        return { ok: true, user: body.user, immediate: true };
+      }
+      return { ok: true, user: body.user || body, immediate: false,
+               message: "Te hemos enviado un email para confirmar tu cuenta." };
+    }
+    return { ok: false, message: body.error_description || body.msg || body.error || "Signup failed" };
+  }
+
+  function signInWithGoogle() {
+    const redirect = window.location.origin + "/cuenta.html";
+    const url = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirect)}`;
+    window.location.href = url;
+  }
+
+  async function resetPassword(email) {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        options: { redirectTo: window.location.origin + "/cuenta.html" },
+      }),
+    });
+    if (res.ok) return { ok: true, message: "Te hemos enviado un email para restablecer tu contraseña." };
+    let body = null; try { body = await res.json(); } catch(_) {}
+    return { ok: false, message: (body && (body.error_description || body.msg)) || "Error" };
+  }
+
+  async function updatePassword(newPassword) {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: "PUT",
+      headers: { ...authHeaders(true) },
+      body: JSON.stringify({ password: newPassword }),
+    });
+    if (res.ok) return { ok: true };
+    let body = null; try { body = await res.json(); } catch(_) {}
+    return { ok: false, message: (body && (body.error_description || body.msg)) || "Error" };
+  }
+
+  // OAuth callback: tras Google viene a /cuenta.html#access_token=...
+  function readOAuthFragment() {
+    if (!window.location.hash) return null;
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const accessToken = params.get("access_token");
+    if (!accessToken) return null;
+    const expiresIn = parseInt(params.get("expires_in") || "3600", 10);
+    const refreshToken = params.get("refresh_token") || "";
+    const tokenType = params.get("token_type") || "bearer";
+    return { accessToken, expiresIn, refreshToken, tokenType };
+  }
+
+  async function consumeOAuthFragment() {
+    const frag = readOAuthFragment();
+    if (!frag) return null;
+
+    // Get user info using the access_token
+    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${frag.accessToken}`,
+      },
+    });
+    if (!userRes.ok) return null;
+    const user = await userRes.json();
+
+    const tokenObj = {
+      access_token: frag.accessToken,
+      refresh_token: frag.refreshToken,
+      token_type: frag.tokenType,
+      expires_in: frag.expiresIn,
+      expires_at: Math.floor(Date.now() / 1000) + frag.expiresIn,
+      user,
+    };
+    setToken(tokenObj);
+    // Limpiar el hash
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return user;
+  }
+
   function signOut() { clearToken(); }
   function currentUser() { return getToken()?.user || null; }
+  function currentSession() { return getToken(); }
 
   async function isAdmin() {
     const t = getToken();
@@ -78,7 +175,47 @@
     return rows.length > 0;
   }
 
-  // ---------- Admin queries ----------
+  /* ========== Client (logged-in user) ========== */
+  async function clientMyPurchases() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/client_my_purchases`, {
+      method: "POST", headers: authHeaders(true), body: "{}",
+    });
+    if (!res.ok) return [];
+    return res.json();
+  }
+  async function clientMyBooks() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/client_my_books`, {
+      method: "POST", headers: authHeaders(true), body: "{}",
+    });
+    if (!res.ok) return [];
+    return res.json();
+  }
+  async function clientMyActivationCode(purchaseId) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/client_my_activation_code`, {
+      method: "POST", headers: authHeaders(true),
+      body: JSON.stringify({ p_purchase_id: purchaseId }),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) || null;
+  }
+  async function clientCancelSubscription(purchaseId) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/client_cancel_subscription`, {
+      method: "POST", headers: authHeaders(true),
+      body: JSON.stringify({ p_purchase_id: purchaseId }),
+    });
+    if (!res.ok) return { ok: false, message: "Error" };
+    return res.json();
+  }
+  async function clientReactivateSubscription(purchaseId) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/client_reactivate_subscription`, {
+      method: "POST", headers: authHeaders(true),
+      body: JSON.stringify({ p_purchase_id: purchaseId }),
+    });
+    if (!res.ok) return { ok: false, message: "Error" };
+    return res.json();
+  }
+
+  /* ========== Admin queries ========== */
   async function adminListWaitlist() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/waitlist?select=*&order=created_at.desc`, {
       headers: authHeaders(true),
@@ -113,12 +250,9 @@
     if (!res.ok) return [];
     return res.json();
   }
-
-  // ---------- Bot licenses ----------
   async function adminGenActivationCode(purchaseId) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/gen_bot_activation_code`, {
-      method: "POST",
-      headers: authHeaders(true),
+      method: "POST", headers: authHeaders(true),
       body: JSON.stringify({ p_purchase_id: purchaseId }),
     });
     if (!res.ok) {
@@ -126,10 +260,9 @@
       try { const b = await res.json(); msg = b.message || b.hint || msg; } catch (_) {}
       return { ok: false, message: msg };
     }
-    const code = await res.json(); // PostgREST devuelve el TEXT directo
+    const code = await res.json();
     return { ok: true, code };
   }
-
   async function adminListActivationCodes(purchaseId) {
     const url = purchaseId
       ? `${SUPABASE_URL}/rest/v1/bot_activation_codes?select=*&purchase_id=eq.${purchaseId}&order=created_at.desc`
@@ -138,7 +271,6 @@
     if (!res.ok) return [];
     return res.json();
   }
-
   async function adminListLicenses() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/bot_licenses?select=*&order=activated_at.desc`, {
       headers: authHeaders(true),
@@ -146,24 +278,32 @@
     if (!res.ok) return [];
     return res.json();
   }
-
   async function adminRevokeLicense(chatId, reason = "cancelled") {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/revoke_bot_license`, {
-      method: "POST",
-      headers: authHeaders(true),
+      method: "POST", headers: authHeaders(true),
       body: JSON.stringify({ p_chat_id: chatId, p_reason: reason }),
     });
     return res.ok;
   }
 
   window.StakoSupabase = {
+    // Public
     joinWaitlist, getWaitlistCount,
-    signIn, signOut, currentUser, isAdmin,
+    // Auth
+    signIn, signUp, signInWithGoogle, signOut,
+    resetPassword, updatePassword,
+    currentUser, currentSession, isAdmin,
+    consumeOAuthFragment,
+    // Client
+    clientMyPurchases, clientMyBooks, clientMyActivationCode,
+    clientCancelSubscription, clientReactivateSubscription,
+    // Admin
     adminListWaitlist, adminDeleteWaitlist,
     adminListBotPurchases, adminUpdateBotPurchase,
     adminListBookPurchases,
     adminGenActivationCode, adminListActivationCodes,
     adminListLicenses, adminRevokeLicense,
+    // Constants
     SUPABASE_URL,
   };
 })();
