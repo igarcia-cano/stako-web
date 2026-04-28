@@ -43,11 +43,24 @@ function Hero() {
 /* Animated chart + Telegram message preview */
 function HeroViz() {
   const { t, lang } = useApp();
-  const points = useChartData(80);
+  const live = useCryptoLive();
+  const fallbackPoints = useChartData(60);
+  const livePoints = _normalizeToWalk(live.btcKlines, 60);
+  const points = livePoints || fallbackPoints;
   const path = pointsToPath(points, 480, 220);
   const last = points[points.length - 1];
   const first = points[0];
-  const change = ((last - first) / first) * 100;
+  const fallbackChange = ((last - first) / first) * 100;
+  const change = (live.btcChange24h != null && Number.isFinite(live.btcChange24h))
+    ? live.btcChange24h
+    : fallbackChange;
+
+  // Precio: live si hay, si no truco visual original
+  const livePriceStr = (live.btcPrice != null && Number.isFinite(live.btcPrice))
+    ? "$" + Number(live.btcPrice).toLocaleString("en-US", { maximumFractionDigits: 0 })
+    : null;
+  const fallbackPriceStr = "$67," + (420 + Math.round(last * 6)).toString().padStart(3, "0").slice(0,3);
+  const priceStr = livePriceStr || fallbackPriceStr;
 
   return (
     <div className="viz">
@@ -55,7 +68,7 @@ function HeroViz() {
         <div className="viz__chart-head">
           <div>
             <div className="eyebrow">BTC/USDT · 1H</div>
-            <div className="viz__price mono num-tab">$67,{(420 + Math.round(last * 6)).toString().padStart(3, "0").slice(0,3)}</div>
+            <div className="viz__price mono num-tab">{priceStr}</div>
           </div>
           <div className={`viz__change ${change >= 0 ? "is-up" : "is-down"} mono`}>
             {change >= 0 ? "▲" : "▼"} {Math.abs(change).toFixed(2)}%
@@ -115,6 +128,104 @@ function Marker({ x, y, type }) {
   );
 }
 
+/* ============================================================
+   LIVE CRYPTO DATA (Binance public API, no key)
+   Module-level store: 1 polling cycle for the whole page,
+   no matter how many components subscribe.
+   ============================================================ */
+const STAKO_LIVE_SYMBOLS = ["BTCUSDT","ETHUSDT","SOLUSDT","XRPUSDT","BNBUSDT","ADAUSDT","DOGEUSDT","AVAXUSDT"];
+const STAKO_LIVE_POLL_MS = 12000;
+let _liveStore = { btcKlines: null, btcPrice: null, btcChange24h: null, tickers: {} };
+const _liveListeners = new Set();
+let _liveTimer = null;
+
+async function _liveFetch() {
+  try {
+    const symParam = encodeURIComponent(JSON.stringify(STAKO_LIVE_SYMBOLS));
+    const [klRes, tkRes] = await Promise.all([
+      fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=60", { cache: "no-store" }),
+      fetch("https://api.binance.com/api/v3/ticker/24hr?symbols=" + symParam, { cache: "no-store" }),
+    ]);
+    if (!klRes.ok || !tkRes.ok) return;
+    const klines = await klRes.json();
+    const stats  = await tkRes.json();
+    const closes = Array.isArray(klines)
+      ? klines.map(k => Number(k[4])).filter(Number.isFinite)
+      : [];
+    const tickers = {};
+    if (Array.isArray(stats)) {
+      for (const s of stats) {
+        const price = Number(s.lastPrice);
+        const changePct = Number(s.priceChangePercent);
+        if (Number.isFinite(price)) tickers[s.symbol] = { price, changePct };
+      }
+    }
+    const btc = tickers["BTCUSDT"] || null;
+    _liveStore = {
+      btcKlines: closes.length ? closes : _liveStore.btcKlines,
+      btcPrice: btc ? btc.price : _liveStore.btcPrice,
+      btcChange24h: btc ? btc.changePct : _liveStore.btcChange24h,
+      tickers: Object.keys(tickers).length ? tickers : _liveStore.tickers,
+    };
+    _liveListeners.forEach(fn => { try { fn(_liveStore); } catch (_) {} });
+  } catch (_e) { /* silent: keep last value or fallback */ }
+}
+
+function _liveStart() {
+  if (_liveTimer) return;
+  _liveFetch();
+  _liveTimer = setInterval(_liveFetch, STAKO_LIVE_POLL_MS);
+}
+function _liveStop() {
+  if (_liveTimer) { clearInterval(_liveTimer); _liveTimer = null; }
+}
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      if (_liveListeners.size > 0) _liveStart();
+    } else {
+      _liveStop();
+    }
+  });
+}
+
+function useCryptoLive() {
+  const [data, setData] = useState(_liveStore);
+  useEffect(() => {
+    _liveListeners.add(setData);
+    if (typeof document === "undefined" || document.visibilityState !== "hidden") {
+      _liveStart();
+    }
+    return () => {
+      _liveListeners.delete(setData);
+      if (_liveListeners.size === 0) _liveStop();
+    };
+  }, []);
+  return data;
+}
+
+function _fmtUsd(p) {
+  const n = Number(p);
+  if (!Number.isFinite(n)) return null;
+  const decimals = n >= 1 ? 2 : 4;
+  return n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function _fmtPct(p) {
+  const n = Number(p);
+  if (!Number.isFinite(n)) return null;
+  const sign = n >= 0 ? "+" : "−"; // U+2212
+  return sign + Math.abs(n).toFixed(2) + "%";
+}
+function _normalizeToWalk(values, n) {
+  if (!values || !values.length) return null;
+  const slice = values.slice(-n);
+  let min = Infinity, max = -Infinity;
+  for (const v of slice) { if (v < min) min = v; if (v > max) max = v; }
+  const range = max - min;
+  if (range === 0) return slice.map(() => 50);
+  return slice.map(v => 10 + ((v - min) / range) * 80); // 10..90 = mismo rango que seedWalk
+}
+
 /* Pseudo random walk that updates on a timer */
 function useChartData(n = 80) {
   const [pts, setPts] = useState(() => seedWalk(n));
@@ -152,16 +263,25 @@ function pointToY(v, h) {
 
 /* Ticker bar */
 function Ticker() {
-  const items = [
-    { sym: "BTC/USDT", v: "67,432.18", c: "+1.84%", up: true },
-    { sym: "ETH/USDT", v: "3,418.07", c: "+0.92%", up: true },
-    { sym: "SOL/USDT", v: "182.44", c: "−0.31%", up: false },
-    { sym: "XRP/USDT", v: "0.5824", c: "+2.10%", up: true },
-    { sym: "BNB/USDT", v: "612.05", c: "−0.08%", up: false },
-    { sym: "ADA/USDT", v: "0.4421", c: "+0.51%", up: true },
-    { sym: "DOGE/USDT", v: "0.1582", c: "+3.06%", up: true },
-    { sym: "AVAX/USDT", v: "32.18", c: "−1.22%", up: false },
+  const live = useCryptoLive();
+  const FALLBACK = [
+    { sym: "BTC/USDT",  k: "BTCUSDT",  v: "67,432.18", c: "+1.84%", up: true },
+    { sym: "ETH/USDT",  k: "ETHUSDT",  v: "3,418.07",  c: "+0.92%", up: true },
+    { sym: "SOL/USDT",  k: "SOLUSDT",  v: "182.44",    c: "−0.31%", up: false },
+    { sym: "XRP/USDT",  k: "XRPUSDT",  v: "0.5824",    c: "+2.10%", up: true },
+    { sym: "BNB/USDT",  k: "BNBUSDT",  v: "612.05",    c: "−0.08%", up: false },
+    { sym: "ADA/USDT",  k: "ADAUSDT",  v: "0.4421",    c: "+0.51%", up: true },
+    { sym: "DOGE/USDT", k: "DOGEUSDT", v: "0.1582",    c: "+3.06%", up: true },
+    { sym: "AVAX/USDT", k: "AVAXUSDT", v: "32.18",     c: "−1.22%", up: false },
   ];
+  const items = FALLBACK.map(f => {
+    const tk = live.tickers[f.k];
+    if (!tk || !Number.isFinite(tk.price)) return f;
+    const v = _fmtUsd(tk.price);
+    const c = _fmtPct(tk.changePct);
+    if (!v || !c) return f;
+    return { sym: f.sym, k: f.k, v, c, up: tk.changePct >= 0 };
+  });
   const doubled = [...items, ...items];
   return (
     <div className="ticker">
