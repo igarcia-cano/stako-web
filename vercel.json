@@ -1,13 +1,6 @@
 {
-  "version": 2,
   "cleanUrls": true,
   "trailingSlash": false,
-  "builds": [
-    {
-      "src": "**/*.{html,css,js,jsx,svg,png,jpg,jpeg,gif,webp,ico,woff,woff2,ttf,otf,json}",
-      "use": "@vercel/static"
-    }
-  ],
   "rewrites": [
     { "source": "/blog/:slug", "destination": "/blog.html" }
   ]
