@@ -1317,7 +1317,7 @@ function BlogEditor({ post, categories, onClose }) {
           {msg.text}
           {msg.type === "ok" && isPublished && form.slug && (
             <> &nbsp;·&nbsp;
-              <a href={"/blog/" + form.slug} target="_blank" rel="noreferrer" className="adm-link">
+              <a href={"/blog?p=" + encodeURIComponent(form.slug)} target="_blank" rel="noreferrer" className="adm-link">
                 Ver en el blog ↗
               </a>
             </>

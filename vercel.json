@@ -1,7 +1,4 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    { "source": "/blog/:path+", "destination": "/blog.html" }
-  ]
+  "trailingSlash": false
 }

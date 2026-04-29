@@ -1,6 +1,7 @@
 /* ============================================================
    STAKO — Blog público
-   Renderiza /blog (lista) o /blog/:slug (detalle) según pathname
+   Renderiza /blog (lista) o /blog?p=:slug (detalle)
+   Usamos query params para evitar problemas de rewrites en hosting estático
    ============================================================ */
 const { useState: _bUseState, useEffect: _bUseEffect, useMemo: _bUseMemo } = React;
 
@@ -20,17 +21,26 @@ function _bRenderMarkdown(md) {
   }
 }
 
-function _bGetSlugFromPath() {
-  const m = window.location.pathname.match(/^\/blog\/([^\/?#]+)/);
-  return m ? decodeURIComponent(m[1]) : null;
+function _bGetSlugFromQuery() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get("p");
+    return p ? decodeURIComponent(p) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function _bBuildPostUrl(slug) {
+  return "/blog?p=" + encodeURIComponent(slug);
 }
 
 /* === Router principal === */
 function BlogRouter() {
-  const [slug, setSlug] = _bUseState(_bGetSlugFromPath());
+  const [slug, setSlug] = _bUseState(_bGetSlugFromQuery());
 
   _bUseEffect(() => {
-    const onPop = () => setSlug(_bGetSlugFromPath());
+    const onPop = () => setSlug(_bGetSlugFromQuery());
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
@@ -114,7 +124,7 @@ function BlogListPage() {
 
 function BlogCard({ post }) {
   const cat = post.category_slug;
-  const url = "/blog/" + post.slug;
+  const url = _bBuildPostUrl(post.slug);
   return (
     <a href={url} className="blog-card">
       {post.cover_image_url ? (
@@ -166,9 +176,9 @@ function BlogPostPage({ slug }) {
         if (el && val) el.setAttribute(el.tagName === "META" ? (sel.includes("property") ? "content" : "content") : "href", val);
       };
       const can = document.querySelector('link[rel="canonical"]');
-      if (can) can.setAttribute("href", "https://stakocapital.com/blog/" + post.slug);
+      if (can) can.setAttribute("href", "https://stakocapital.com" + _bBuildPostUrl(post.slug));
       const ogu = document.querySelector('meta[property="og:url"]');
-      if (ogu) ogu.setAttribute("content", "https://stakocapital.com/blog/" + post.slug);
+      if (ogu) ogu.setAttribute("content", "https://stakocapital.com" + _bBuildPostUrl(post.slug));
       const ogt = document.querySelector('meta[property="og:title"]');
       if (ogt) ogt.setAttribute("content", post.title);
       const ogd = document.querySelector('meta[property="og:description"]');
