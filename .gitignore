@@ -23,6 +23,8 @@ _validate.js
 _gitlog.txt
 _v.txt
 _ve.txt
+# Catch-all para archivos temporales generados por scripts
+_*.txt
 
 # Variables de entorno
 .env

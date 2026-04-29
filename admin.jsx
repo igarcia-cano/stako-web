@@ -109,19 +109,24 @@ function Dashboard({ user, onLogout, theme, setTheme }) {
   const [books, setBooks] = useState([]);
   const [licenses, setLicenses] = useState([]);
   const [codes, setCodes] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [blogCategories, setBlogCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const reload = async () => {
     setLoading(true);
-    const [w, b, k, lic, cod] = await Promise.all([
+    const [w, b, k, lic, cod, p, bc] = await Promise.all([
       window.StakoSupabase.adminListWaitlist(),
       window.StakoSupabase.adminListBotPurchases(),
       window.StakoSupabase.adminListBookPurchases(),
       window.StakoSupabase.adminListLicenses(),
       window.StakoSupabase.adminListActivationCodes(),
+      window.StakoSupabase.adminBlogListAllPosts({ status: "all" }),
+      window.StakoSupabase.blogListCategories(),
     ]);
     setWaitlist(w); setBot(b); setBooks(k);
     setLicenses(lic); setCodes(cod);
+    setPosts(p); setBlogCategories(bc);
     setLoading(false);
   };
   useEffect(() => { reload(); }, []);
@@ -132,6 +137,7 @@ function Dashboard({ user, onLogout, theme, setTheme }) {
     { id: "bot", label: `Bot · ${bot.length}` },
     { id: "licenses", label: `Licencias · ${licenses.filter((l) => l.status === "active").length}` },
     { id: "books", label: `Libros · ${books.length}` },
+    { id: "blog", label: `Blog · ${posts.length}` },
   ];
 
   return (
@@ -172,6 +178,7 @@ function Dashboard({ user, onLogout, theme, setTheme }) {
             {tab === "bot" && <BotTable rows={bot} codes={codes} onChange={reload} />}
             {tab === "licenses" && <LicensesTable rows={licenses} onChange={reload} />}
             {tab === "books" && <BookTable rows={books} />}
+            {tab === "blog" && <BlogManager posts={posts} categories={blogCategories} onChange={reload} />}
           </>
         )}
       </main>
@@ -997,6 +1004,493 @@ function BookTable({ rows }) {
         </table>
       </div>
     </div>
+  );
+}
+
+/* ============================================================
+   BLOG MANAGER (lista + editor)
+   ============================================================ */
+function BlogManager({ posts, categories, onChange }) {
+  const [editing, setEditing] = useState(null); // null=lista, 'new'=crear, {post}=editar
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [q, setQ] = useState("");
+
+  const filtered = useMemo(() => {
+    return posts.filter((p) => {
+      if (statusFilter !== "all" && p.status !== statusFilter) return false;
+      if (q) {
+        const needle = q.toLowerCase();
+        if (!(p.title || "").toLowerCase().includes(needle) &&
+            !(p.slug || "").toLowerCase().includes(needle)) return false;
+      }
+      return true;
+    });
+  }, [posts, statusFilter, q]);
+
+  if (editing) {
+    return (
+      <BlogEditor
+        post={editing === "new" ? null : editing}
+        categories={categories}
+        onClose={() => { setEditing(null); onChange(); }}
+      />
+    );
+  }
+
+  return (
+    <div className="adm-section">
+      <header className="adm-section__head">
+        <div>
+          <div className="eyebrow">— Blog</div>
+          <h2 className="display adm-h2">{posts.length} artículos</h2>
+          <p className="text-muted" style={{ marginTop: 8 }}>
+            Borradores y publicados. Edita o crea desde aquí — los publicados aparecen en{" "}
+            <code>stakocapital.com/blog</code>.
+          </p>
+        </div>
+        <div>
+          <button className="btn btn-primary" onClick={() => setEditing("new")}>
+            + Nuevo artículo
+          </button>
+        </div>
+      </header>
+
+      <div className="adm-toolbar" style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <select
+          className="input mono"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{ width: "auto", minWidth: 160 }}
+        >
+          <option value="all">Todos · {posts.length}</option>
+          <option value="published">Publicados · {posts.filter((p) => p.status === "published").length}</option>
+          <option value="draft">Borradores · {posts.filter((p) => p.status === "draft").length}</option>
+        </select>
+        <input
+          type="search"
+          className="input"
+          placeholder="Buscar por título o slug…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          style={{ flex: 1, minWidth: 220 }}
+        />
+      </div>
+
+      <div className="adm-table-wrap">
+        <table className="adm-table">
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Categoría</th>
+              <th>Estado</th>
+              <th>Actualizado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr><td colSpan={5} className="adm-empty">
+                {posts.length === 0 ? (
+                  <>
+                    Aún no hay artículos.<br/>
+                    <span className="text-dim mono" style={{ fontSize: 11 }}>
+                      Crea el primero con "+ Nuevo artículo"
+                    </span>
+                  </>
+                ) : (
+                  <>Ningún artículo coincide con el filtro.</>
+                )}
+              </td></tr>
+            ) : filtered.map((p) => (
+              <BlogRow key={p.id} post={p} categories={categories}
+                onEdit={() => setEditing(p)} onChange={onChange} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function BlogRow({ post, categories, onEdit, onChange }) {
+  const [busy, setBusy] = useState(false);
+  const cat = categories.find((c) => c.slug === post.category_slug);
+
+  const togglePublish = async () => {
+    setBusy(true);
+    if (post.status === "published") await window.StakoSupabase.adminBlogUnpublish(post.id);
+    else await window.StakoSupabase.adminBlogPublish(post.id);
+    setBusy(false); onChange();
+  };
+
+  const remove = async () => {
+    if (!confirm(`¿Eliminar definitivamente "${post.title}"?\nEsta acción no se puede deshacer.`)) return;
+    setBusy(true);
+    await window.StakoSupabase.adminBlogDeletePost(post.id);
+    setBusy(false); onChange();
+  };
+
+  return (
+    <tr>
+      <td>
+        <div style={{ fontWeight: 500 }}>{post.title || <span className="text-dim">(sin título)</span>}</div>
+        <div className="mono text-dim" style={{ fontSize: 11, marginTop: 3 }}>/{post.slug}</div>
+      </td>
+      <td className="text-muted">{cat ? cat.name : <span className="text-dim">—</span>}</td>
+      <td>
+        <BlogStatusBadge s={post.status} />
+      </td>
+      <td className="text-muted mono num-tab">
+        {new Date(post.updated_at).toLocaleDateString("es-ES")}
+      </td>
+      <td>
+        <div className="adm-actions">
+          <button className="adm-link" onClick={onEdit} disabled={busy}>Editar</button>
+          <button className="adm-link" onClick={togglePublish} disabled={busy}>
+            {post.status === "published" ? "Despublicar" : "Publicar"}
+          </button>
+          <button className="adm-link-danger" onClick={remove} disabled={busy}>Eliminar</button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function BlogStatusBadge({ s }) {
+  const map = {
+    published: { c: "var(--accent)", l: "Publicado" },
+    draft:     { c: "var(--gold)",   l: "Borrador" },
+  };
+  const m = map[s] || { c: "var(--fg-muted)", l: s || "—" };
+  return (
+    <span className="adm-status" style={{
+      color: m.c,
+      borderColor: `color-mix(in oklch, ${m.c} 35%, transparent)`,
+    }}>● {m.l}</span>
+  );
+}
+
+/* === Editor === */
+function BlogEditor({ post, categories, onClose }) {
+  const isNew = !post;
+  const [form, setForm] = useState(() => ({
+    title:           post?.title           || "",
+    slug:            post?.slug            || "",
+    subtitle:        post?.subtitle        || "",
+    excerpt:         post?.excerpt         || "",
+    body_md:         post?.body_md         || "",
+    category_slug:   post?.category_slug   || "",
+    tags:            (post?.tags || []).join(", "),
+    cover_image_url: post?.cover_image_url || "",
+    author:          post?.author          || "Equipo Stako",
+    status:          post?.status          || "draft",
+  }));
+  const [showPreview, setShowPreview] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null); // { type: 'ok'|'err', text }
+  const [savedId, setSavedId] = useState(post?.id || null);
+
+  const upd = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  // Auto-slug en creación si el slug está vacío
+  const autoSlug = (s) =>
+    (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 80);
+
+  const onTitleChange = (v) => {
+    if (isNew && !savedId && (form.slug === "" || form.slug === autoSlug(form.title))) {
+      upd({ title: v, slug: autoSlug(v) });
+    } else {
+      upd({ title: v });
+    }
+  };
+
+  const buildPayload = () => ({
+    title: form.title.trim(),
+    slug: (form.slug.trim() || autoSlug(form.title)),
+    subtitle: form.subtitle.trim() || null,
+    excerpt: form.excerpt.trim() || null,
+    body_md: form.body_md,
+    category_slug: form.category_slug || null,
+    tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+    cover_image_url: form.cover_image_url.trim() || null,
+    author: form.author.trim() || "Equipo Stako",
+    status: form.status,
+  });
+
+  const validate = () => {
+    if (!form.title.trim()) return "Falta el título.";
+    if (!(form.slug.trim() || autoSlug(form.title))) return "Falta el slug.";
+    return null;
+  };
+
+  const save = async ({ publish = null } = {}) => {
+    const err = validate();
+    if (err) { setMsg({ type: "err", text: err }); return; }
+    setBusy(true); setMsg(null);
+    const payload = buildPayload();
+    if (publish === true)  payload.status = "published";
+    if (publish === false) payload.status = "draft";
+
+    let res;
+    if (savedId) {
+      res = await window.StakoSupabase.adminBlogUpdatePost(savedId, payload);
+    } else {
+      res = await window.StakoSupabase.adminBlogCreatePost(payload);
+    }
+    setBusy(false);
+    if (!res.ok) {
+      setMsg({ type: "err", text: "No se pudo guardar: " + (res.message || "error desconocido") });
+      return;
+    }
+    setSavedId(res.post.id);
+    upd({ status: res.post.status, slug: res.post.slug });
+    setMsg({
+      type: "ok",
+      text: res.post.status === "published"
+        ? "Publicado. Ya está visible en /blog."
+        : "Guardado como borrador.",
+    });
+  };
+
+  const remove = async () => {
+    if (!savedId) { onClose(); return; }
+    if (!confirm(`¿Eliminar definitivamente "${form.title}"?\nEsta acción no se puede deshacer.`)) return;
+    setBusy(true);
+    await window.StakoSupabase.adminBlogDeletePost(savedId);
+    setBusy(false);
+    onClose();
+  };
+
+  // Preview HTML
+  const previewHtml = useMemo(() => {
+    if (!form.body_md) return "";
+    try {
+      const raw = window.marked ? window.marked.parse(form.body_md, { breaks: true, gfm: true }) : "";
+      return window.DOMPurify ? window.DOMPurify.sanitize(raw) : raw;
+    } catch (_) { return ""; }
+  }, [form.body_md]);
+
+  const readingTime = Math.max(1, Math.ceil((form.body_md || "").length / 1500));
+  const isPublished = form.status === "published";
+
+  return (
+    <div className="adm-section blog-editor">
+      <header className="adm-section__head" style={{ alignItems: "center" }}>
+        <div>
+          <button className="adm-link" onClick={onClose} style={{ marginBottom: 10 }}>← Volver al listado</button>
+          <div className="eyebrow">— {isNew && !savedId ? "Nuevo artículo" : "Editar artículo"}</div>
+          <h2 className="display adm-h2" style={{ marginTop: 6 }}>
+            {form.title || <span className="text-dim">(Sin título)</span>}
+          </h2>
+          <div className="mono text-dim" style={{ fontSize: 12, marginTop: 4 }}>
+            <BlogStatusBadge s={form.status} /> &nbsp;·&nbsp;
+            {readingTime} min de lectura &nbsp;·&nbsp;
+            {form.body_md.length} caracteres
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowPreview((v) => !v)}>
+            {showPreview ? "Ocultar preview" : "Mostrar preview"}
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={() => save({ publish: false })} disabled={busy}>
+            Guardar borrador
+          </button>
+          {isPublished ? (
+            <button className="btn btn-ghost btn-sm" onClick={() => save({ publish: false })} disabled={busy}>
+              Despublicar
+            </button>
+          ) : (
+            <button className="btn btn-primary btn-sm" onClick={() => save({ publish: true })} disabled={busy}>
+              {busy ? "Publicando…" : "Publicar"}
+            </button>
+          )}
+          {savedId && (
+            <button className="btn btn-ghost btn-sm" onClick={remove} disabled={busy}
+              style={{ color: "var(--danger)" }}>Eliminar</button>
+          )}
+        </div>
+      </header>
+
+      {msg && (
+        <div className={"blog-editor__msg " + (msg.type === "ok" ? "is-ok" : "is-err")}>
+          {msg.text}
+          {msg.type === "ok" && isPublished && form.slug && (
+            <> &nbsp;·&nbsp;
+              <a href={"/blog/" + form.slug} target="_blank" rel="noreferrer" className="adm-link">
+                Ver en el blog ↗
+              </a>
+            </>
+          )}
+        </div>
+      )}
+
+      <div className={"blog-editor__grid " + (showPreview ? "is-split" : "is-single")}>
+        {/* === COLUMNA IZQUIERDA: FORMULARIO === */}
+        <div className="blog-editor__form">
+          <Field label="Título">
+            <input
+              className="input"
+              value={form.title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              placeholder="Ej: La Fed sube tipos: qué cambia para tu cartera"
+            />
+          </Field>
+
+          <div className="blog-editor__row">
+            <Field label="Slug (URL)">
+              <input
+                className="input mono"
+                value={form.slug}
+                onChange={(e) => upd({ slug: e.target.value })}
+                placeholder="la-fed-sube-tipos"
+              />
+              <span className="text-dim mono" style={{ fontSize: 11 }}>
+                stakocapital.com/blog/<strong>{form.slug || "(slug)"}</strong>
+              </span>
+            </Field>
+
+            <Field label="Categoría">
+              <select
+                className="input mono"
+                value={form.category_slug}
+                onChange={(e) => upd({ category_slug: e.target.value })}
+              >
+                <option value="">— Sin categoría —</option>
+                {categories.map((c) => (
+                  <option key={c.slug} value={c.slug}>{c.name}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+
+          <Field label="Subtítulo (opcional)">
+            <input
+              className="input"
+              value={form.subtitle}
+              onChange={(e) => upd({ subtitle: e.target.value })}
+              placeholder="Subtítulo o gancho que se ve bajo el título"
+            />
+          </Field>
+
+          <Field label="Resumen (excerpt — sale en la lista del blog)">
+            <textarea
+              className="input"
+              rows={2}
+              value={form.excerpt}
+              onChange={(e) => upd({ excerpt: e.target.value })}
+              placeholder="2-3 frases de resumen para la portada del blog y el SEO."
+            />
+          </Field>
+
+          <div className="blog-editor__row">
+            <Field label="Tags (separados por comas)">
+              <input
+                className="input mono"
+                value={form.tags}
+                onChange={(e) => upd({ tags: e.target.value })}
+                placeholder="fed, tipos-de-interes, macro"
+              />
+            </Field>
+            <Field label="Imagen de portada (URL)">
+              <input
+                className="input mono"
+                value={form.cover_image_url}
+                onChange={(e) => upd({ cover_image_url: e.target.value })}
+                placeholder="https://… (opcional)"
+              />
+            </Field>
+          </div>
+
+          <Field label="Autor">
+            <input
+              className="input"
+              value={form.author}
+              onChange={(e) => upd({ author: e.target.value })}
+              placeholder="Equipo Stako"
+            />
+          </Field>
+
+          <Field label="Cuerpo (Markdown)">
+            <textarea
+              className="input mono blog-editor__body"
+              value={form.body_md}
+              onChange={(e) => upd({ body_md: e.target.value })}
+              placeholder={"# Título de sección\n\nUn párrafo de introducción.\n\n## Subsección\n\n- Punto uno\n- Punto dos\n\n> Una cita relevante.\n\n**Negrita** y *cursiva*."}
+              spellCheck={true}
+            />
+            <span className="text-dim mono" style={{ fontSize: 11 }}>
+              Soporta Markdown: <code>#</code> títulos, <code>**negrita**</code>, <code>*cursiva*</code>,
+              <code>[enlace](url)</code>, <code>&gt; cita</code>, listas con <code>-</code>.
+            </span>
+          </Field>
+        </div>
+
+        {/* === COLUMNA DERECHA: PREVIEW === */}
+        {showPreview && (
+          <aside className="blog-editor__preview">
+            <div className="blog-editor__preview-head mono text-dim">— Vista previa</div>
+            <article className="blog-article" style={{ padding: 0 }}>
+              <div className="blog-article__inner" style={{ maxWidth: "100%" }}>
+                {form.category_slug && (
+                  <div className="eyebrow blog-article__cat">
+                    {categories.find((c) => c.slug === form.category_slug)?.name || form.category_slug}
+                  </div>
+                )}
+                <h1 className="display blog-article__title" style={{ fontSize: "clamp(28px, 4vw, 40px)" }}>
+                  {form.title || <span className="text-dim">(Sin título)</span>}
+                </h1>
+                {form.subtitle && <p className="blog-article__subtitle text-muted">{form.subtitle}</p>}
+                <div className="blog-article__meta">
+                  <span className="mono">{form.author || "Equipo Stako"}</span>
+                  <span className="dot-sep">·</span>
+                  <span className="mono">Hoy</span>
+                  <span className="dot-sep">·</span>
+                  <span className="mono">{readingTime} min</span>
+                </div>
+                {form.cover_image_url && (
+                  <figure className="blog-article__cover">
+                    <img src={form.cover_image_url} alt="" />
+                  </figure>
+                )}
+                {previewHtml ? (
+                  <div className="blog-article__body" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                ) : (
+                  <div className="blog-article__body text-dim">
+                    <em>El cuerpo del artículo aparecerá aquí.</em>
+                  </div>
+                )}
+                {form.tags && form.tags.trim() && (
+                  <div className="blog-article__tags">
+                    {form.tags.split(",").map((t) => t.trim()).filter(Boolean).map((t) => (
+                      <span key={t} className="blog-tag mono">#{t}</span>
+                    ))}
+                  </div>
+                )}
+                <aside className="blog-disclaimer">
+                  <div className="eyebrow">— Aviso</div>
+                  <p>
+                    Este contenido es <strong>informativo y educativo</strong>. No constituye recomendación
+                    de inversión, asesoramiento financiero ni invitación a comprar o vender activos.
+                    Consulta con un asesor registrado en la CNMV antes de tomar decisiones financieras.
+                    La inversión conlleva riesgo de pérdida del capital invertido.
+                  </p>
+                </aside>
+              </div>
+            </article>
+          </aside>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <label className="adm-field" style={{ marginBottom: 18 }}>
+      <span className="mono">{label}</span>
+      {children}
+    </label>
   );
 }
 

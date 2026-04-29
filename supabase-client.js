@@ -321,6 +321,113 @@
     return res.ok;
   }
 
+  /* ========== Blog (public read + admin CRUD) ========== */
+  function _slugify(s) {
+    return (s || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 80);
+  }
+
+  async function blogListCategories() {
+    const url = `${SUPABASE_URL}/rest/v1/blog_categories?select=*&order=display_order.asc`;
+    const res = await fetch(url, { headers: authHeaders(false) });
+    if (!res.ok) return [];
+    return res.json();
+  }
+
+  async function blogListPublishedPosts({ category, q, limit = 20, offset = 0 } = {}) {
+    let url = `${SUPABASE_URL}/rest/v1/blog_posts?select=id,slug,title,subtitle,excerpt,category_slug,tags,cover_image_url,author,published_at,reading_time_min&status=eq.published&order=published_at.desc&limit=${limit}&offset=${offset}`;
+    if (category) url += `&category_slug=eq.${encodeURIComponent(category)}`;
+    if (q)        url += `&or=(title.ilike.*${encodeURIComponent(q)}*,excerpt.ilike.*${encodeURIComponent(q)}*)`;
+    const res = await fetch(url, { headers: authHeaders(false) });
+    if (!res.ok) return [];
+    return res.json();
+  }
+
+  async function blogGetPostBySlug(slug) {
+    const url = `${SUPABASE_URL}/rest/v1/blog_posts?select=*&slug=eq.${encodeURIComponent(slug)}&status=eq.published&limit=1`;
+    const res = await fetch(url, { headers: authHeaders(false) });
+    if (!res.ok) return null;
+    const arr = await res.json();
+    return arr[0] || null;
+  }
+
+  /* --- Admin --- */
+  async function adminBlogListAllPosts({ status, q } = {}) {
+    let url = `${SUPABASE_URL}/rest/v1/blog_posts?select=id,slug,title,subtitle,excerpt,category_slug,tags,cover_image_url,author,status,published_at,reading_time_min,created_at,updated_at&order=created_at.desc&limit=200`;
+    if (status && status !== "all") url += `&status=eq.${status}`;
+    if (q) url += `&or=(title.ilike.*${encodeURIComponent(q)}*,slug.ilike.*${encodeURIComponent(q)}*)`;
+    const res = await fetch(url, { headers: authHeaders(true) });
+    if (!res.ok) return [];
+    return res.json();
+  }
+
+  async function adminBlogGetPost(id) {
+    const url = `${SUPABASE_URL}/rest/v1/blog_posts?select=*&id=eq.${id}&limit=1`;
+    const res = await fetch(url, { headers: authHeaders(true) });
+    if (!res.ok) return null;
+    const arr = await res.json();
+    return arr[0] || null;
+  }
+
+  async function adminBlogCreatePost(data) {
+    const slug = (data.slug && data.slug.trim()) || _slugify(data.title);
+    const body = {
+      slug,
+      title: data.title,
+      subtitle: data.subtitle || null,
+      excerpt: data.excerpt || null,
+      body_md: data.body_md || "",
+      category_slug: data.category_slug || null,
+      tags: data.tags || [],
+      cover_image_url: data.cover_image_url || null,
+      author: data.author || "Equipo Stako",
+      status: data.status || "draft",
+      published_at: data.published_at || null,
+    };
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts`, {
+      method: "POST",
+      headers: { ...authHeaders(true), Prefer: "return=representation" },
+      body: JSON.stringify(body),
+    });
+    const txt = await res.text();
+    if (!res.ok) return { ok: false, message: txt };
+    const arr = JSON.parse(txt);
+    return { ok: true, post: arr[0] };
+  }
+
+  async function adminBlogUpdatePost(id, patch) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { ...authHeaders(true), Prefer: "return=representation" },
+      body: JSON.stringify(patch),
+    });
+    const txt = await res.text();
+    if (!res.ok) return { ok: false, message: txt };
+    const arr = JSON.parse(txt);
+    return { ok: true, post: arr[0] };
+  }
+
+  async function adminBlogDeletePost(id) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?id=eq.${id}`, {
+      method: "DELETE",
+      headers: authHeaders(true),
+    });
+    return { ok: res.ok };
+  }
+
+  async function adminBlogPublish(id) {
+    return adminBlogUpdatePost(id, { status: "published" });
+  }
+  async function adminBlogUnpublish(id) {
+    return adminBlogUpdatePost(id, { status: "draft" });
+  }
+
   window.StakoSupabase = {
     // Public
     joinWaitlist, getWaitlistCount,
@@ -339,6 +446,12 @@
     adminGenActivationCode, adminListActivationCodes,
     adminListLicenses, adminRevokeLicense,
     adminCreateSubscription, adminRenewSubscription, adminSetExpiresAt,
+    // Blog public
+    blogListCategories, blogListPublishedPosts, blogGetPostBySlug,
+    // Blog admin
+    adminBlogListAllPosts, adminBlogGetPost,
+    adminBlogCreatePost, adminBlogUpdatePost, adminBlogDeletePost,
+    adminBlogPublish, adminBlogUnpublish,
     // Constants
     SUPABASE_URL,
   };

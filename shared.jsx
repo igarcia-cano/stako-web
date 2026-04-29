@@ -145,7 +145,7 @@ function Nav({ active = "home" }) {
   const links = [
     { id: "home", href: "index.html", label: t.nav.home },
     { id: "books", href: "#", label: t.nav.books, soon: true },
-    { id: "blog", href: "#", label: t.nav.blog, soon: true },
+    { id: "blog", href: "/blog", label: t.nav.blog },
     { id: "bot", href: "bot.html", label: t.nav.bot },
   ];
 
