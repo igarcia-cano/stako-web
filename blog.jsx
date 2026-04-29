@@ -261,12 +261,4 @@ function BlogDisclaimer() {
 }
 
 /* === Footer simple === */
-function Footer() {
-  return (
-    <footer className="footer">
-      <div className="container footer__inner">
-        <div className="mono text-dim">© {new Date().getFullYear()} Stako · stakocapital.com</div>
-      </div>
-    </footer>
-  );
-}
+/* (eliminado — usamos Footer de shared.jsx con enlaces legales) */

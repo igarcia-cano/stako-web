@@ -43,10 +43,10 @@ window.STAKO_I18N = {
           cta: "Avísame al lanzamiento",
         },
         blog: {
-          tag: "Próximamente",
+          tag: "Activo",
           name: "Blog & Análisis",
-          desc: "Tesis de mercado, lecturas semanales y desgloses de las operaciones del bot.",
-          cta: "Suscribirme al boletín",
+          desc: "Educación financiera, historia económica y análisis de noticias. Sin recomendaciones de inversión.",
+          cta: "Leer el blog",
         },
       },
     },
@@ -109,6 +109,9 @@ window.STAKO_I18N = {
       },
       copyright: "© 2026 Stako. Todos los derechos reservados.",
       risk: "Operar con criptomonedas implica riesgo de pérdida total. Stako no es asesor financiero. Cada usuario opera bajo su propia responsabilidad.",
+    },
+    legal: {
+      back: "Inicio",
     },
     bot_page: {
       back: "Volver",
@@ -174,10 +177,10 @@ window.STAKO_I18N = {
           cta: "Notify me",
         },
         blog: {
-          tag: "Coming soon",
+          tag: "Live",
           name: "Blog & Analysis",
-          desc: "Market theses, weekly reads and breakdowns of the bot's trades.",
-          cta: "Subscribe",
+          desc: "Financial education, economic history and news analysis. No investment recommendations.",
+          cta: "Read the blog",
         },
       },
     },
@@ -240,6 +243,9 @@ window.STAKO_I18N = {
       },
       copyright: "© 2026 Stako. All rights reserved.",
       risk: "Crypto trading involves risk of total loss. Stako is not a financial advisor. Each user trades at their own responsibility.",
+    },
+    legal: {
+      back: "Home",
     },
     bot_page: {
       back: "Back",

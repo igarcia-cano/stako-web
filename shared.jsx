@@ -212,20 +212,19 @@ function Footer() {
           </div>
           <div className="footer__cols">
             <FooterCol title={f.product} items={[
-              { label: f.links.bot, href: "bot.html" },
-              { label: `${f.links.books} · ${t.nav.soon}`, href: "#" },
-              { label: `${f.links.blog} · ${t.nav.soon}`, href: "#" },
+              { label: f.links.bot, href: "/bot" },
+              { label: `${f.links.books} · ${t.nav.soon}`, href: "/#waitlist", dim: true },
+              { label: f.links.blog, href: "/blog" },
             ]} />
             <FooterCol title={f.company} items={[
-              { label: f.links.about, href: "#" },
-              { label: f.links.contact, href: "#" },
-              { label: f.links.careers, href: "#" },
+              { label: f.links.about, href: "/#ecosystem" },
+              { label: f.links.contact, href: "mailto:stakobot@outlook.com" },
             ]} />
             <FooterCol title={f.legal} items={[
-              { label: f.links.terms, href: "#" },
-              { label: f.links.privacy, href: "#" },
-              { label: f.links.cookies, href: "#" },
-              { label: f.links.risk, href: "#" },
+              { label: f.links.terms,   href: "/aviso-legal" },
+              { label: f.links.privacy, href: "/privacidad" },
+              { label: f.links.cookies, href: "/cookies" },
+              { label: f.links.risk,    href: "/aviso-riesgo" },
             ]} />
           </div>
         </div>
@@ -244,14 +243,70 @@ function FooterCol({ title, items }) {
       <div className="eyebrow" style={{ marginBottom: 14 }}>{title}</div>
       <ul className="footer__list">
         {items.map((it) => (
-          <li key={it.label}><a href={it.href}>{it.label}</a></li>
+          <li key={it.label}>
+            <a href={it.href} className={it.dim ? "is-dim" : ""}>{it.label}</a>
+          </li>
         ))}
       </ul>
     </div>
   );
 }
 
+/* ===== Cookie banner (LSSI 22.2 + AEPD) ===== */
+function CookieBanner() {
+  const { lang } = useApp();
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem("stako-cookies-consent");
+      if (!v) setShow(true);
+    } catch (_) { setShow(true); }
+    const reopen = () => setShow(true);
+    window.addEventListener("stako:cookies-reopen", reopen);
+    return () => window.removeEventListener("stako:cookies-reopen", reopen);
+  }, []);
+
+  const decide = (decision) => {
+    try {
+      localStorage.setItem("stako-cookies-consent", JSON.stringify({
+        decision, // "accepted" | "rejected"
+        ts: Date.now(),
+      }));
+    } catch (_) {}
+    setShow(false);
+  };
+
+  if (!show) return null;
+  const ES = lang === "es";
+
+  return (
+    <div className="cookie-banner" role="dialog" aria-live="polite" aria-label={ES ? "Aviso de cookies" : "Cookie notice"}>
+      <div className="cookie-banner__inner">
+        <div className="cookie-banner__copy">
+          <div className="eyebrow">— {ES ? "Cookies" : "Cookies"}</div>
+          <p>
+            {ES ? (
+              <>Usamos solo cookies <strong>técnicas necesarias</strong> para que la web funcione: sesión, idioma y tema. No usamos cookies de seguimiento ni publicitarias. Puedes ver el detalle en la <a href="/cookies">política de cookies</a>.</>
+            ) : (
+              <>We only use <strong>strictly necessary cookies</strong> to make the site work: session, language and theme. No tracking or advertising cookies. Full details in our <a href="/cookies">cookie policy</a>.</>
+            )}
+          </p>
+        </div>
+        <div className="cookie-banner__actions">
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => decide("rejected")}>
+            {ES ? "Solo necesarias" : "Strictly necessary"}
+          </button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => decide("accepted")}>
+            {ES ? "Aceptar" : "Accept"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* expose globals for other Babel scripts */
 Object.assign(window, {
-  AppProvider, useApp, Reveal, Logo, Nav, Footer, ThemeToggle, LangToggle,
+  AppProvider, useApp, Reveal, Logo, Nav, Footer, ThemeToggle, LangToggle, CookieBanner,
 });

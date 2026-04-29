@@ -338,11 +338,11 @@ function Ecosystem() {
           <Reveal delay={220}>
             <PillarCard
               kind="blog"
-              tag={p.blog.tag} tagType="soon"
+              tag={p.blog.tag} tagType="live"
               name={p.blog.name}
               desc={p.blog.desc}
               cta={p.blog.cta}
-              soon
+              href="/blog"
             />
           </Reveal>
         </div>

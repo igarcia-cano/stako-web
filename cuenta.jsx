@@ -10,6 +10,7 @@ function CuentaApp() {
       <Nav active={null} />
       <CuentaMain />
       <Footer />
+      <CookieBanner />
     </AppProvider>
   );
 }
