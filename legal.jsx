@@ -7,9 +7,9 @@ const { useState: _lUseState, useEffect: _lUseEffect } = React;
 
 /* Datos del titular */
 const TITULAR = {
-  nombre: "Iván García",
+  nombre: "Iván García Cano",
   nif: "47580784V",
-  direccion: "C/ Río Guadarrama",
+  direccion: "C/ Río Guadarrama, 28939 Arroyomolinos, Madrid, España",
   email: "stakobot@outlook.com",
   web: "stakocapital.com",
   registroMercantil: null, // n/a (persona física)
