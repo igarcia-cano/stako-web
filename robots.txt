@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /cuenta
+
+Sitemap: https://stakocapital.com/sitemap.xml

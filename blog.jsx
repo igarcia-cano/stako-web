@@ -167,23 +167,72 @@ function BlogPostPage({ slug }) {
     return () => { cancelled = true; };
   }, [slug]);
 
-  // SEO: actualizar título y meta cuando llega el post
+  // SEO: actualizar título, meta y JSON-LD Article cuando llega el post
   _bUseEffect(() => {
-    if (post && post.title) {
-      document.title = post.title + " — Stako";
-      const setMeta = (sel, val) => {
-        const el = document.querySelector(sel);
-        if (el && val) el.setAttribute(el.tagName === "META" ? (sel.includes("property") ? "content" : "content") : "href", val);
-      };
-      const can = document.querySelector('link[rel="canonical"]');
-      if (can) can.setAttribute("href", "https://stakocapital.com" + _bBuildPostUrl(post.slug));
-      const ogu = document.querySelector('meta[property="og:url"]');
-      if (ogu) ogu.setAttribute("content", "https://stakocapital.com" + _bBuildPostUrl(post.slug));
-      const ogt = document.querySelector('meta[property="og:title"]');
-      if (ogt) ogt.setAttribute("content", post.title);
-      const ogd = document.querySelector('meta[property="og:description"]');
-      if (ogd && post.excerpt) ogd.setAttribute("content", post.excerpt);
-    }
+    if (!post || !post.title) return;
+    const SITE = "https://stakocapital.com";
+    const url = SITE + _bBuildPostUrl(post.slug);
+    const fullTitle = post.title + " — Stako";
+    const img = post.cover_image_url || (SITE + "/og-image.png");
+
+    document.title = fullTitle;
+
+    const setAttr = (sel, attr, val) => {
+      const el = document.querySelector(sel);
+      if (el && val != null) el.setAttribute(attr, val);
+    };
+    setAttr('link[rel="canonical"]', "href", url);
+    setAttr('meta[name="description"]', "content", post.excerpt || "");
+    setAttr('meta[property="og:url"]', "content", url);
+    setAttr('meta[property="og:title"]', "content", post.title);
+    setAttr('meta[property="og:description"]', "content", post.excerpt || "");
+    setAttr('meta[property="og:type"]', "content", "article");
+    setAttr('meta[property="og:image"]', "content", img);
+    setAttr('meta[property="og:image:alt"]', "content", post.title);
+    setAttr('meta[name="twitter:url"]', "content", url);
+    setAttr('meta[name="twitter:title"]', "content", post.title);
+    setAttr('meta[name="twitter:description"]', "content", post.excerpt || "");
+    setAttr('meta[name="twitter:image"]', "content", img);
+    setAttr('meta[name="twitter:image:alt"]', "content", post.title);
+
+    document.querySelectorAll('script[data-stako-jsonld]').forEach(s => s.remove());
+    const article = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "mainEntityOfPage": { "@type": "WebPage", "@id": url },
+      "headline": post.title,
+      "description": post.excerpt || "",
+      "image": img,
+      "datePublished": post.published_at || post.created_at || null,
+      "dateModified": post.updated_at || post.published_at || null,
+      "author": { "@type": "Organization", "name": post.author || "Equipo Stako", "url": SITE + "/" },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Stako",
+        "logo": { "@type": "ImageObject", "url": SITE + "/favicon.svg" }
+      },
+      "inLanguage": "es-ES"
+    };
+    const breadcrumb = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": SITE + "/" },
+        { "@type": "ListItem", "position": 2, "name": "Blog",   "item": SITE + "/blog" },
+        { "@type": "ListItem", "position": 3, "name": post.title, "item": url }
+      ]
+    };
+    [article, breadcrumb].forEach(obj => {
+      const s = document.createElement("script");
+      s.type = "application/ld+json";
+      s.setAttribute("data-stako-jsonld", "post");
+      s.textContent = JSON.stringify(obj);
+      document.head.appendChild(s);
+    });
+
+    return () => {
+      document.querySelectorAll('script[data-stako-jsonld]').forEach(s => s.remove());
+    };
   }, [post]);
 
   if (post === undefined) {

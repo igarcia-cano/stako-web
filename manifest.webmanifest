@@ -1,0 +1,19 @@
+{
+  "name": "Stako",
+  "short_name": "Stako",
+  "description": "Hub de inversion automatizada. Bot de trading en Telegram con capital aislado en Binance.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0b0d",
+  "theme_color": "#0a0b0d",
+  "lang": "es-ES",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
