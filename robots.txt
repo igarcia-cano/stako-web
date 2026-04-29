@@ -1,6 +1,35 @@
+# robots.txt para stakocapital.com
+# https://stakocapital.com/robots.txt
+
 User-agent: *
+Allow: /
+
+# Areas privadas / no indexables
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /cuenta
+Disallow: /cuenta.html
+Disallow: /api/
+
+# Permitir explicitamente Googlebot, Bingbot
+User-agent: Googlebot
 Allow: /
 Disallow: /admin
 Disallow: /cuenta
+Disallow: /api/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /cuenta
+Disallow: /api/
+
+# Bloquear scrapers de IA generativa (opcional, conservar si no quieres que tu contenido entrene LLMs)
+# User-agent: GPTBot
+# Disallow: /
+# User-agent: Google-Extended
+# Disallow: /
+# User-agent: CCBot
+# Disallow: /
 
 Sitemap: https://stakocapital.com/sitemap.xml
