@@ -5,14 +5,14 @@
    ============================================================ */
 const { useState: _lUseState, useEffect: _lUseEffect } = React;
 
-/* Datos del titular — CAMBIAR cuando los proporcione el usuario */
+/* Datos del titular */
 const TITULAR = {
-  nombre: "[NOMBRE COMPLETO O RAZÓN SOCIAL DEL TITULAR]",
-  nif: "[NIF / CIF]",
-  direccion: "[DIRECCIÓN POSTAL COMPLETA]",
+  nombre: "Iván García",
+  nif: "47580784V",
+  direccion: "C/ Río Guadarrama",
   email: "stakobot@outlook.com",
   web: "stakocapital.com",
-  registroMercantil: null, // poner si es sociedad: "Registro Mercantil de [Provincia], Tomo X, Folio Y, Hoja Z"
+  registroMercantil: null, // n/a (persona física)
 };
 
 const FECHA_ULT_ACT = "29 de abril de 2026";
