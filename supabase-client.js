@@ -342,9 +342,9 @@
   }
 
   async function blogListPublishedPosts({ category, q, limit = 20, offset = 0 } = {}) {
-    let url = `${SUPABASE_URL}/rest/v1/blog_posts?select=id,slug,title,subtitle,excerpt,category_slug,tags,cover_image_url,author,published_at,reading_time_min&status=eq.published&order=published_at.desc&limit=${limit}&offset=${offset}`;
+    let url = `${SUPABASE_URL}/rest/v1/blog_posts?select=id,slug,title,subtitle,excerpt,title_en,subtitle_en,excerpt_en,body_md_en,category_slug,tags,cover_image_url,author,published_at,reading_time_min&status=eq.published&order=published_at.desc&limit=${limit}&offset=${offset}`;
     if (category) url += `&category_slug=eq.${encodeURIComponent(category)}`;
-    if (q)        url += `&or=(title.ilike.*${encodeURIComponent(q)}*,excerpt.ilike.*${encodeURIComponent(q)}*)`;
+    if (q)        url += `&or=(title.ilike.*${encodeURIComponent(q)}*,excerpt.ilike.*${encodeURIComponent(q)}*,title_en.ilike.*${encodeURIComponent(q)}*,excerpt_en.ilike.*${encodeURIComponent(q)}*)`;
     const res = await fetch(url, { headers: authHeaders(false) });
     if (!res.ok) return [];
     return res.json();
@@ -384,6 +384,10 @@
       subtitle: data.subtitle || null,
       excerpt: data.excerpt || null,
       body_md: data.body_md || "",
+      title_en: data.title_en || null,
+      subtitle_en: data.subtitle_en || null,
+      excerpt_en: data.excerpt_en || null,
+      body_md_en: data.body_md_en || null,
       category_slug: data.category_slug || null,
       tags: data.tags || [],
       cover_image_url: data.cover_image_url || null,

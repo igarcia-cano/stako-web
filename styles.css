@@ -2341,3 +2341,59 @@ section { padding-block: clamp(72px, 10vw, 140px); }
   .confirm-card  { padding: 40px 24px; border-radius: 18px; }
   .confirm-actions .btn { width: 100%; justify-content: center; }
 }
+
+/* ============================================================
+   Banner de idioma en páginas legales (solo cuando lang=en)
+   ============================================================ */
+.legal__lang-banner {
+  margin: 24px 0 32px;
+  padding: 16px 18px;
+  background: var(--bg-card);
+  border: 1px solid color-mix(in oklch, var(--accent) 30%, var(--border));
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+}
+.legal__lang-banner__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.legal__lang-banner__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-muted, var(--text-dim));
+}
+
+/* Banner de idioma en blog (artículo solo en un idioma) */
+.blog-lang-banner {
+  margin: 16px 0 24px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid color-mix(in oklch, var(--accent) 25%, var(--border));
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+}
+.blog-lang-banner__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.blog-lang-banner__body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg-muted, var(--text-dim));
+}

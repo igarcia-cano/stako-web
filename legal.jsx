@@ -23,23 +23,38 @@ function _lFormatTitular() {
 
 /* === Layout común === */
 function LegalLayout({ title, eyebrow, lastUpdate, children }) {
+  // Lang viene del documento (no podemos llamar useApp aquí porque LegalLayout
+  // es invocado dentro de AppProvider, así que sí podemos — usamos useApp).
+  const { t, lang } = useApp();
+  const labels = window.STAKO_I18N?.[lang]?.legal || {};
   return (
     <article className="legal">
       <div className="container legal__inner">
         <header className="legal__head">
-          <a href="/" className="legal__back">← {window.STAKO_I18N?.[document.documentElement.lang || "es"]?.legal?.back || "Inicio"}</a>
+          <a href="/" className="legal__back">← {labels.back || "Inicio"}</a>
           {eyebrow && <div className="eyebrow legal__eyebrow">— {eyebrow}</div>}
           <h1 className="display legal__title">{title}</h1>
           {lastUpdate && (
             <p className="legal__date mono text-muted">
-              Última actualización: {lastUpdate}
+              {lang === "en" ? "Last updated: " : "Última actualización: "}{lastUpdate}
             </p>
           )}
         </header>
+
+        {lang === "en" && (
+          <div className="legal__lang-banner">
+            <div className="legal__lang-banner__title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              {labels.banner_es_only_title}
+            </div>
+            <p className="legal__lang-banner__body">{labels.banner_es_only_body}</p>
+          </div>
+        )}
+
         <div className="legal__body">{children}</div>
         <footer className="legal__foot">
           <p className="text-muted">
-            ¿Dudas o consultas sobre este documento? Escríbenos a{" "}
+            {lang === "en" ? "Questions about this document? Email us at " : "¿Dudas o consultas sobre este documento? Escríbenos a "}
             <a href={`mailto:${TITULAR.email}`}>{TITULAR.email}</a>.
           </p>
         </footer>

@@ -16,6 +16,7 @@ function CuentaApp() {
 }
 
 function CuentaMain() {
+  const { t } = useApp();
   const auth = useAuthState();
   const [section, setSection] = _useS(() => {
     if (window.location.hash === "#suscripciones") return "subs";
@@ -23,13 +24,12 @@ function CuentaMain() {
     return "profile";
   });
 
-  // Si no hay sesión, mostrar invitación a login
   if (auth.loading) {
-    return <main className="cuenta-main"><div className="container"><p className="text-muted" style={{ padding: 80, textAlign: "center" }}>Cargando…</p></div></main>;
+    return <main className="cuenta-main"><div className="container"><p className="text-muted" style={{ padding: 80, textAlign: "center" }}>{t.cuenta.loading}</p></div></main>;
   }
 
   if (!auth.user) {
-    return <CuentaLoginRequired auth={auth} />;
+    return <CuentaLoginRequired auth={auth} t={t} />;
   }
 
   return (
@@ -38,12 +38,12 @@ function CuentaMain() {
         <CuentaSidebar
           section={section} setSection={setSection}
           user={auth.user} admin={auth.admin}
-          onLogout={auth.signOut}
+          onLogout={auth.signOut} t={t}
         />
         <div className="cuenta-content">
-          {section === "profile" && <CuentaProfile user={auth.user} admin={auth.admin} />}
-          {section === "subs"    && <CuentaSubs />}
-          {section === "books"   && <CuentaBooks />}
+          {section === "profile" && <CuentaProfile user={auth.user} admin={auth.admin} t={t} />}
+          {section === "subs"    && <CuentaSubs t={t} />}
+          {section === "books"   && <CuentaBooks t={t} />}
         </div>
       </div>
     </main>
@@ -51,7 +51,7 @@ function CuentaMain() {
 }
 
 /* ===== Login required: formulario integrado en la página ===== */
-function CuentaLoginRequired({ auth }) {
+function CuentaLoginRequired({ auth, t }) {
   const [mode, setMode] = _useS("login"); // login | signup | forgot
   const [email, setEmail] = _useS("");
   const [pwd, setPwd] = _useS("");
@@ -67,18 +67,18 @@ function CuentaLoginRequired({ auth }) {
       if (mode === "login") {
         const r = await window.StakoSupabase.signIn(email.trim(), pwd);
         if (r.ok) auth.refresh();
-        else setErr(r.message || "Error al iniciar sesión");
+        else setErr(r.message || t.auth.err_login);
       } else if (mode === "signup") {
-        if (pwd.length < 8) { setErr("La contraseña debe tener al menos 8 caracteres."); setBusy(false); return; }
-        if (pwd !== pwd2) { setErr("Las contraseñas no coinciden."); setBusy(false); return; }
+        if (pwd.length < 8) { setErr(t.auth.err_pwd_short); setBusy(false); return; }
+        if (pwd !== pwd2) { setErr(t.auth.err_pwd_mismatch); setBusy(false); return; }
         const r = await window.StakoSupabase.signUp(email.trim(), pwd);
         if (r.ok) {
           if (r.immediate) auth.refresh();
-          else setInfo(r.message || "Te hemos enviado un email de confirmación.");
-        } else setErr(r.message || "Error al crear cuenta");
+          else setInfo(t.auth.info_signup_email);
+        } else setErr(r.message || t.auth.err_signup);
       } else if (mode === "forgot") {
         const r = await window.StakoSupabase.resetPassword(email.trim());
-        if (r.ok) setInfo(r.message);
+        if (r.ok) setInfo(t.auth.info_forgot_email);
         else setErr(r.message || "Error");
       }
     } finally { setBusy(false); }
@@ -90,14 +90,14 @@ function CuentaLoginRequired({ auth }) {
   };
 
   const titles = {
-    login: "Iniciar sesión",
-    signup: "Crear cuenta",
-    forgot: "Recuperar contraseña",
+    login:  t.auth.login_title,
+    signup: t.auth.signup_title,
+    forgot: t.auth.forgot_title,
   };
   const subs = {
-    login: "Accede a tu cuenta para ver suscripciones, productos y más.",
-    signup: "Crea una cuenta para gestionar tus suscripciones y productos.",
-    forgot: "Te enviaremos un email para restablecer tu contraseña.",
+    login:  t.auth.login_sub,
+    signup: t.auth.signup_sub,
+    forgot: t.auth.forgot_sub,
   };
 
   return (
@@ -117,31 +117,31 @@ function CuentaLoginRequired({ auth }) {
                   <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.6 39.6 16.2 44 24 44z"/>
                   <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2C41.8 35.6 44 30.3 44 24c0-1.3-.1-2.4-.4-3.5z"/>
                 </svg>
-                Continuar con Google
+                {t.auth.google_cta}
               </button>
-              <div className="modal-divider"><span>o</span></div>
+              <div className="modal-divider"><span>{t.auth.separator}</span></div>
             </>
           )}
 
           <form onSubmit={onSubmit} className="modal-form">
             <label className="modal-label">
-              <span className="mono">Email</span>
+              <span className="mono">{t.auth.email_label}</span>
               <input type="email" required value={email}
                      onChange={(e) => setEmail(e.target.value)}
-                     placeholder="tu@email.com" autoFocus disabled={busy} />
+                     placeholder={t.auth.email_ph} autoFocus disabled={busy} />
             </label>
             {mode !== "forgot" && (
               <label className="modal-label">
-                <span className="mono">Contraseña</span>
+                <span className="mono">{t.auth.password_label}</span>
                 <input type="password" required value={pwd}
                        onChange={(e) => setPwd(e.target.value)}
-                       placeholder={mode === "signup" ? "Mínimo 8 caracteres" : "Tu contraseña"}
+                       placeholder={mode === "signup" ? t.auth.password_ph_signup : t.auth.password_ph_login}
                        disabled={busy} minLength={mode === "signup" ? 8 : undefined} />
               </label>
             )}
             {mode === "signup" && (
               <label className="modal-label">
-                <span className="mono">Repite la contraseña</span>
+                <span className="mono">{t.auth.password_repeat_label}</span>
                 <input type="password" required value={pwd2}
                        onChange={(e) => setPwd2(e.target.value)} disabled={busy} />
               </label>
@@ -149,7 +149,7 @@ function CuentaLoginRequired({ auth }) {
             {err && <div className="modal-err">{err}</div>}
             {info && <div className="modal-info">{info}</div>}
             <button type="submit" className="btn btn-primary modal-submit" disabled={busy}>
-              {busy ? "..." : (mode === "login" ? "Entrar" : mode === "signup" ? "Crear cuenta" : "Enviar email")}
+              {busy ? t.auth.submitting : (mode === "login" ? t.auth.submit_login : mode === "signup" ? t.auth.submit_signup : t.auth.submit_forgot)}
             </button>
           </form>
 
@@ -157,22 +157,22 @@ function CuentaLoginRequired({ auth }) {
             {mode === "login" && (
               <>
                 <button type="button" className="link-btn" onClick={() => { setErr(""); setInfo(""); setMode("forgot"); }}>
-                  ¿Olvidaste tu contraseña?
+                  {t.auth.forgot_link}
                 </button>
                 <span className="text-dim"> · </span>
                 <button type="button" className="link-btn" onClick={() => { setErr(""); setInfo(""); setMode("signup"); }}>
-                  Crear cuenta nueva
+                  {t.auth.signup_link}
                 </button>
               </>
             )}
             {mode === "signup" && (
               <button type="button" className="link-btn" onClick={() => { setErr(""); setInfo(""); setMode("login"); }}>
-                ¿Ya tienes cuenta? Inicia sesión
+                {t.auth.to_login_link}
               </button>
             )}
             {mode === "forgot" && (
               <button type="button" className="link-btn" onClick={() => { setErr(""); setInfo(""); setMode("login"); }}>
-                Volver al inicio de sesión
+                {t.auth.back_to_login}
               </button>
             )}
           </div>
@@ -183,16 +183,16 @@ function CuentaLoginRequired({ auth }) {
 }
 
 /* ===== Sidebar ===== */
-function CuentaSidebar({ section, setSection, user, admin, onLogout }) {
+function CuentaSidebar({ section, setSection, user, admin, onLogout, t }) {
   const initials = (user.email || "?").split("@")[0].slice(0, 2).toUpperCase();
   const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split("@")[0];
 
   const items = [
-    { id: "profile", label: "Mi perfil",
+    { id: "profile", label: t.cuenta.sidebar.profile,
       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
-    { id: "subs", label: "Suscripciones",
+    { id: "subs", label: t.cuenta.sidebar.subs,
       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg> },
-    { id: "books", label: "Mis libros",
+    { id: "books", label: t.cuenta.sidebar.books,
       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> },
   ];
 
@@ -226,20 +226,21 @@ function CuentaSidebar({ section, setSection, user, admin, onLogout }) {
         {admin && (
           <a href="admin.html" className="cuenta-side-link cuenta-side-link--admin">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>Panel admin</span>
+            <span>{t.cuenta.subs.sidebar_admin}</span>
           </a>
         )}
       </nav>
 
       <button className="btn btn-ghost btn-sm cuenta-side-logout" onClick={onLogout}>
-        Cerrar sesión
+        {t.auth.logout}
       </button>
     </aside>
   );
 }
 
 /* ===== Sección: Perfil ===== */
-function CuentaProfile({ user, admin }) {
+function CuentaProfile({ user, admin, t }) {
+  const { lang } = useApp();
   const [pwd, setPwd] = _useS("");
   const [pwd2, setPwd2] = _useS("");
   const [busy, setBusy] = _useS(false);
@@ -249,45 +250,46 @@ function CuentaProfile({ user, admin }) {
   const onChangePwd = async (e) => {
     e.preventDefault();
     setMsg(""); setErr("");
-    if (pwd.length < 8) { setErr("Mínimo 8 caracteres."); return; }
-    if (pwd !== pwd2) { setErr("Las contraseñas no coinciden."); return; }
+    if (pwd.length < 8) { setErr(t.cuenta.profile.pwd_short_err); return; }
+    if (pwd !== pwd2) { setErr(t.auth.err_pwd_mismatch); return; }
     setBusy(true);
     const r = await window.StakoSupabase.updatePassword(pwd);
     setBusy(false);
-    if (r.ok) { setMsg("Contraseña actualizada."); setPwd(""); setPwd2(""); }
+    if (r.ok) { setMsg(t.cuenta.profile.saved); setPwd(""); setPwd2(""); }
     else setErr(r.message || "Error");
   };
 
   const provider = user.app_metadata?.provider || "email";
-  const createdAt = user.created_at ? new Date(user.created_at).toLocaleDateString("es-ES") : "—";
+  const localeStr = lang === "en" ? "en-US" : "es-ES";
+  const createdAt = user.created_at ? new Date(user.created_at).toLocaleDateString(localeStr) : "—";
 
   return (
     <section className="cuenta-section">
-      <div className="eyebrow">— Mi cuenta</div>
-      <h1 className="display cuenta-h1">Mi perfil</h1>
+      <div className="eyebrow">— {t.cuenta.eyebrow}</div>
+      <h1 className="display cuenta-h1">{t.cuenta.profile.title}</h1>
 
       <div className="cuenta-card">
-        <h2 className="cuenta-h2">Datos de la cuenta</h2>
+        <h2 className="cuenta-h2">{t.cuenta.profile.section_account}</h2>
         <dl className="cuenta-dl">
-          <dt>Email</dt><dd className="mono">{user.email}</dd>
-          <dt>Método de acceso</dt><dd>{provider === "google" ? "Google" : "Email + contraseña"}</dd>
-          <dt>Cuenta creada</dt><dd className="mono">{createdAt}</dd>
-          {admin && (<><dt>Rol</dt><dd><span className="badge-admin">Administrador</span></dd></>)}
+          <dt>{t.cuenta.profile.email_label}</dt><dd className="mono">{user.email}</dd>
+          <dt>{t.cuenta.profile.method_label}</dt><dd>{provider === "google" ? t.cuenta.profile.method_google : t.cuenta.profile.method_email}</dd>
+          <dt>{t.cuenta.profile.created_label}</dt><dd className="mono">{createdAt}</dd>
+          {admin && (<><dt>{t.cuenta.profile.role_label}</dt><dd><span className="badge-admin">{t.cuenta.profile.role_admin}</span></dd></>)}
         </dl>
       </div>
 
       {provider !== "google" && (
         <div className="cuenta-card">
-          <h2 className="cuenta-h2">Cambiar contraseña</h2>
+          <h2 className="cuenta-h2">{t.cuenta.profile.change_pwd_title}</h2>
           <form onSubmit={onChangePwd} className="cuenta-form">
             <label className="modal-label">
-              <span className="mono">Nueva contraseña</span>
+              <span className="mono">{t.cuenta.profile.new_pwd_label}</span>
               <input type="password" minLength={8} required value={pwd}
                      onChange={(e) => setPwd(e.target.value)}
-                     placeholder="Mínimo 8 caracteres" disabled={busy} />
+                     placeholder={t.cuenta.profile.new_pwd_ph} disabled={busy} />
             </label>
             <label className="modal-label">
-              <span className="mono">Repite la nueva contraseña</span>
+              <span className="mono">{t.cuenta.profile.new_pwd_repeat_label}</span>
               <input type="password" minLength={8} required value={pwd2}
                      onChange={(e) => setPwd2(e.target.value)}
                      disabled={busy} />
@@ -295,7 +297,7 @@ function CuentaProfile({ user, admin }) {
             {err && <div className="modal-err">{err}</div>}
             {msg && <div className="modal-info">{msg}</div>}
             <button type="submit" className="btn btn-primary" disabled={busy}>
-              {busy ? "Guardando…" : "Guardar contraseña"}
+              {busy ? t.cuenta.profile.saving : t.cuenta.profile.save_pwd}
             </button>
           </form>
         </div>
@@ -303,10 +305,8 @@ function CuentaProfile({ user, admin }) {
 
       {provider === "google" && (
         <div className="cuenta-card">
-          <h2 className="cuenta-h2">Acceso con Google</h2>
-          <p className="text-muted">
-            Tu cuenta usa Google para iniciar sesión. La contraseña se gestiona desde tu cuenta de Google.
-          </p>
+          <h2 className="cuenta-h2">{t.cuenta.profile.google_title}</h2>
+          <p className="text-muted">{t.cuenta.profile.google_body}</p>
         </div>
       )}
     </section>
@@ -314,7 +314,7 @@ function CuentaProfile({ user, admin }) {
 }
 
 /* ===== Sección: Suscripciones ===== */
-function CuentaSubs() {
+function CuentaSubs({ t }) {
   const [rows, setRows] = _useS([]);
   const [codes, setCodes] = _useS({});
   const [loading, setLoading] = _useS(true);
@@ -324,7 +324,6 @@ function CuentaSubs() {
     setLoading(true);
     const data = await window.StakoSupabase.clientMyPurchases();
     setRows(data || []);
-    // pedir códigos sin canjear de cada compra activa (no es ideal pero simple)
     const codeMap = {};
     for (const p of data || []) {
       if (p.status === "active" && !p.linked_chat_id) {
@@ -340,7 +339,7 @@ function CuentaSubs() {
   _useE(() => { reload(); }, []);
 
   const cancel = async (id) => {
-    if (!confirm("¿Cancelar esta suscripción al final del periodo?")) return;
+    if (!confirm(t.cuenta.subs.cancel_confirm)) return;
     setBusyId(id);
     const r = await window.StakoSupabase.clientCancelSubscription(id);
     setBusyId(null);
@@ -360,45 +359,47 @@ function CuentaSubs() {
 
   return (
     <section className="cuenta-section">
-      <div className="eyebrow">— Mi cuenta</div>
-      <h1 className="display cuenta-h1">Suscripciones</h1>
+      <div className="eyebrow">— {t.cuenta.eyebrow}</div>
+      <h1 className="display cuenta-h1">{t.cuenta.subs.title}</h1>
 
-      {loading ? <p className="text-muted">Cargando…</p> :
+      {loading ? <p className="text-muted">{t.cuenta.subs.loading}</p> :
        rows.length === 0 ? (
         <div className="cuenta-empty">
-          <p className="text-muted">No tienes ninguna suscripción activa todavía.</p>
-          <a href="bot.html" className="btn btn-primary" style={{ marginTop: 24 }}>Conoce el Bot de Trading</a>
+          <p className="text-muted">{t.cuenta.subs.empty}</p>
+          <a href="bot.html" className="btn btn-primary" style={{ marginTop: 24 }}>{t.cuenta.subs.empty_cta}</a>
         </div>
        ) : (
         <div className="cuenta-subs">
           {rows.map((p) => <SubCard key={p.id} p={p} code={codes[p.id]} busy={busyId === p.id}
                                       onCancel={() => cancel(p.id)}
                                       onReactivate={() => reactivate(p.id)}
-                                      onCopy={copy} />)}
+                                      onCopy={copy} t={t} />)}
         </div>
        )}
     </section>
   );
 }
 
-function SubCard({ p, code, busy, onCancel, onReactivate, onCopy }) {
-  const fmtDate = (s) => s ? new Date(s).toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" }) : "—";
+function SubCard({ p, code, busy, onCancel, onReactivate, onCopy, t }) {
+  const { lang } = useApp();
+  const localeStr = lang === "en" ? "en-US" : "es-ES";
+  const fmtDate = (s) => s ? new Date(s).toLocaleDateString(localeStr, { day: "2-digit", month: "long", year: "numeric" }) : "—";
 
   let status, statusClass;
   if (p.status === "active" && p.cancel_at_period_end) {
-    status = "Cancelada · activa hasta " + fmtDate(p.expires_at);
+    status = t.cuenta.subs.status_cancelled_until + fmtDate(p.expires_at);
     statusClass = "sub-status--warn";
   } else if (p.status === "active") {
-    status = "Activa";
+    status = t.cuenta.subs.status_active;
     statusClass = "sub-status--ok";
   } else if (p.status === "cancelled") {
-    status = "Cancelada";
+    status = t.cuenta.subs.status_cancelled;
     statusClass = "sub-status--off";
   } else if (p.status === "banned") {
-    status = "Suspendida";
+    status = t.cuenta.subs.status_suspended;
     statusClass = "sub-status--err";
   } else {
-    status = "Pendiente";
+    status = t.cuenta.subs.status_pending;
     statusClass = "sub-status--warn";
   }
 
@@ -406,26 +407,26 @@ function SubCard({ p, code, busy, onCancel, onReactivate, onCopy }) {
     <div className="sub-card">
       <div className="sub-card__head">
         <div>
-          <div className="sub-card__title">Bot de Trading · Stako</div>
+          <div className="sub-card__title">{t.cuenta.subs.bot_card_title}</div>
           <div className={`sub-status ${statusClass}`}>● {status}</div>
         </div>
-        <div className="sub-card__price mono">€{Number(p.amount_eur || 0).toFixed(2)}<span className="text-dim">/mes</span></div>
+        <div className="sub-card__price mono">€{Number(p.amount_eur || 0).toFixed(2)}<span className="text-dim">{t.cuenta.subs.per_month}</span></div>
       </div>
 
       <dl className="cuenta-dl cuenta-dl--inline">
-        <dt>Inicio</dt><dd className="mono">{fmtDate(p.created_at)}</dd>
-        {p.expires_at && (<><dt>Próxima renovación</dt><dd className="mono">{fmtDate(p.expires_at)}</dd></>)}
-        {p.linked_chat_id && (<><dt>Telegram vinculado</dt><dd className="mono text-muted">chat_id {p.linked_chat_id}</dd></>)}
+        <dt>{t.cuenta.subs.start_label}</dt><dd className="mono">{fmtDate(p.created_at)}</dd>
+        {p.expires_at && (<><dt>{t.cuenta.subs.next_renewal_label}</dt><dd className="mono">{fmtDate(p.expires_at)}</dd></>)}
+        {p.linked_chat_id && (<><dt>{t.cuenta.subs.telegram_linked_label}</dt><dd className="mono text-muted">chat_id {p.linked_chat_id}</dd></>)}
       </dl>
 
       {p.status === "active" && !p.linked_chat_id && code && (
         <div className="sub-card__code-block">
           <div className="text-muted" style={{ fontSize: 13, marginBottom: 8 }}>
-            Tu código de activación. Cánjealo en <a href="https://t.me/StakoTradingBot" target="_blank" rel="noopener">@StakoTradingBot</a> con <span className="mono">/activar</span>:
+            {t.cuenta.subs.code_intro_a} <a href="https://t.me/StakoTradingBot" target="_blank" rel="noopener">@StakoTradingBot</a> {t.cuenta.subs.code_intro_b} <span className="mono">/activar</span>:
           </div>
           <div className="sub-card__code">
             <span className="mono">{code}</span>
-            <button className="btn btn-ghost btn-sm" onClick={() => onCopy(code)}>Copiar</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => onCopy(code)}>{t.cuenta.subs.code_copy}</button>
           </div>
         </div>
       )}
@@ -433,12 +434,12 @@ function SubCard({ p, code, busy, onCancel, onReactivate, onCopy }) {
       <div className="sub-card__actions">
         {p.status === "active" && !p.cancel_at_period_end && (
           <button className="btn btn-ghost btn-sm" disabled={busy} onClick={onCancel}>
-            Cancelar suscripción
+            {t.cuenta.subs.cancel_btn}
           </button>
         )}
         {p.status === "active" && p.cancel_at_period_end && (
           <button className="btn btn-primary btn-sm" disabled={busy} onClick={onReactivate}>
-            Reactivar
+            {t.cuenta.subs.reactivate_btn}
           </button>
         )}
       </div>
@@ -447,7 +448,9 @@ function SubCard({ p, code, busy, onCancel, onReactivate, onCopy }) {
 }
 
 /* ===== Sección: Libros ===== */
-function CuentaBooks() {
+function CuentaBooks({ t }) {
+  const { lang } = useApp();
+  const localeStr = lang === "en" ? "en-US" : "es-ES";
   const [rows, setRows] = _useS([]);
   const [loading, setLoading] = _useS(true);
   _useE(() => {
@@ -460,28 +463,28 @@ function CuentaBooks() {
 
   return (
     <section className="cuenta-section">
-      <div className="eyebrow">— Mi cuenta</div>
-      <h1 className="display cuenta-h1">Mis libros</h1>
+      <div className="eyebrow">— {t.cuenta.eyebrow}</div>
+      <h1 className="display cuenta-h1">{t.cuenta.books.title}</h1>
 
-      {loading ? <p className="text-muted">Cargando…</p> :
+      {loading ? <p className="text-muted">{t.cuenta.books.loading}</p> :
        rows.length === 0 ? (
         <div className="cuenta-empty">
-          <p className="text-muted">Aún no has comprado ningún libro.</p>
+          <p className="text-muted">{t.cuenta.books.empty}</p>
           <p className="text-dim mono" style={{ fontSize: 12, marginTop: 12 }}>
-            La librería de Stako se lanzará próximamente.
+            {t.cuenta.books.empty_hint}
           </p>
         </div>
        ) : (
         <div className="cuenta-books">
           {rows.map((b) => (
             <div key={b.id} className="book-card">
-              <div className="book-card__title">{b.book_title || "Libro Stako"}</div>
+              <div className="book-card__title">{b.book_title || t.cuenta.books.default_title}</div>
               <div className="text-muted mono num-tab" style={{ fontSize: 13 }}>
-                €{Number(b.amount_eur || 0).toFixed(2)} · {new Date(b.created_at).toLocaleDateString("es-ES")}
+                €{Number(b.amount_eur || 0).toFixed(2)} · {new Date(b.created_at).toLocaleDateString(localeStr)}
               </div>
               {b.download_url && (
                 <a href={b.download_url} className="btn btn-ghost btn-sm" style={{ marginTop: 14 }}>
-                  Descargar
+                  {t.cuenta.books.download}
                 </a>
               )}
             </div>

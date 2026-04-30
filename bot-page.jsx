@@ -133,42 +133,16 @@ function TelegramOnboarding() {
             </PhoneFrame>
           </Reveal>
           <div className="telegram-sec__notes">
-            <Reveal className="tnote" delay={80}>
-              <div className="tnote__num mono">/start</div>
-              <div className="tnote__t">{lang === "es" ? "Comando inicial" : "Initial command"}</div>
-              <div className="tnote__d">
-                {lang === "es"
-                  ? "El usuario abre el bot en Telegram y escribe /start. El bot responde con su descripción y un menú."
-                  : "The user opens the bot in Telegram and types /start. The bot replies with its description and a menu."}
-              </div>
-            </Reveal>
-            <Reveal className="tnote" delay={160}>
-              <div className="tnote__num mono">/setup</div>
-              <div className="tnote__t">{lang === "es" ? "Conexión con Binance" : "Binance connection"}</div>
-              <div className="tnote__d">
-                {lang === "es"
-                  ? "Te guía para crear una API key con permisos solo de trading. Stako jamás puede retirar fondos."
-                  : "Guides you to create an API key with trading-only permissions. Stako can never withdraw funds."}
-              </div>
-            </Reveal>
-            <Reveal className="tnote" delay={240}>
-              <div className="tnote__num mono">/allocate</div>
-              <div className="tnote__t">{lang === "es" ? "Capital aislado" : "Isolated capital"}</div>
-              <div className="tnote__d">
-                {lang === "es"
-                  ? "Decides cuánto USDT entra en juego. El resto de tu cartera ni se toca ni se ve afectado."
-                  : "You decide how much USDT goes in. The rest of your portfolio is untouched."}
-              </div>
-            </Reveal>
-            <Reveal className="tnote" delay={320}>
-              <div className="tnote__num mono">/run</div>
-              <div className="tnote__t">{lang === "es" ? "Operativa en vivo" : "Live trading"}</div>
-              <div className="tnote__d">
-                {lang === "es"
-                  ? "El bot empieza a operar 24/7. Recibes notificación en cada compra, venta, stop-loss o take-profit."
-                  : "The bot starts trading 24/7. You get a ping on every buy, sell, stop-loss or take-profit."}
-              </div>
-            </Reveal>
+            {p.pipeline.map((step, idx) => {
+              const cmd = ["/start", "/setup", "/allocate", "/run"][idx] || "/cmd";
+              return (
+                <Reveal key={idx} className="tnote" delay={80 + idx * 80}>
+                  <div className="tnote__num mono">{cmd}</div>
+                  <div className="tnote__t">{step.t}</div>
+                  <div className="tnote__d">{step.d}</div>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </div>

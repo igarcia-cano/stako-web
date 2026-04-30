@@ -63,6 +63,7 @@ function useAuthState() {
 
 /* ===== Login Modal ===== */
 function LoginModal({ open, onClose, onLoggedIn }) {
+  const { t } = useApp();
   const [mode, setMode] = _useState("login"); // login | signup | forgot
   const [email, setEmail] = _useState("");
   const [pwd, setPwd] = _useState("");
@@ -90,18 +91,18 @@ function LoginModal({ open, onClose, onLoggedIn }) {
       if (mode === "login") {
         const r = await window.StakoSupabase.signIn(email.trim(), pwd);
         if (r.ok) { onLoggedIn && onLoggedIn(r.user); onClose(); }
-        else setErr(r.message || "Error al iniciar sesión");
+        else setErr(r.message || t.auth.err_login);
       } else if (mode === "signup") {
-        if (pwd.length < 8) { setErr("La contraseña debe tener al menos 8 caracteres."); setBusy(false); return; }
-        if (pwd !== pwd2) { setErr("Las contraseñas no coinciden."); setBusy(false); return; }
+        if (pwd.length < 8) { setErr(t.auth.err_pwd_short); setBusy(false); return; }
+        if (pwd !== pwd2) { setErr(t.auth.err_pwd_mismatch); setBusy(false); return; }
         const r = await window.StakoSupabase.signUp(email.trim(), pwd);
         if (r.ok) {
           if (r.immediate) { onLoggedIn && onLoggedIn(r.user); onClose(); }
-          else setInfo(r.message || "Te hemos enviado un email de confirmación.");
-        } else setErr(r.message || "Error al crear cuenta");
+          else setInfo(t.auth.info_signup_email);
+        } else setErr(r.message || t.auth.err_signup);
       } else if (mode === "forgot") {
         const r = await window.StakoSupabase.resetPassword(email.trim());
-        if (r.ok) setInfo(r.message);
+        if (r.ok) setInfo(t.auth.info_forgot_email);
         else setErr(r.message || "Error");
       }
     } finally { setBusy(false); }
@@ -113,22 +114,22 @@ function LoginModal({ open, onClose, onLoggedIn }) {
   };
 
   const titles = {
-    login: "Iniciar sesión",
-    signup: "Crear cuenta",
-    forgot: "Recuperar contraseña",
+    login: t.auth.login_title,
+    signup: t.auth.signup_title,
+    forgot: t.auth.forgot_title,
   };
 
   const modalContent = (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
 
         <div className="eyebrow">— Stako</div>
         <h2 className="display modal-title">{titles[mode]}</h2>
         <p className="text-muted modal-sub">
-          {mode === "login" && "Accede a tu cuenta para ver suscripciones, productos y más."}
-          {mode === "signup" && "Crea una cuenta para gestionar tus suscripciones y productos."}
-          {mode === "forgot" && "Te enviaremos un email para restablecer tu contraseña."}
+          {mode === "login" && t.auth.login_sub}
+          {mode === "signup" && t.auth.signup_sub}
+          {mode === "forgot" && t.auth.forgot_sub}
         </p>
 
         {mode !== "forgot" && (
@@ -140,31 +141,31 @@ function LoginModal({ open, onClose, onLoggedIn }) {
                 <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.6 39.6 16.2 44 24 44z"/>
                 <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2C41.8 35.6 44 30.3 44 24c0-1.3-.1-2.4-.4-3.5z"/>
               </svg>
-              Continuar con Google
+              {t.auth.google_cta}
             </button>
 
-            <div className="modal-divider"><span>o</span></div>
+            <div className="modal-divider"><span>{t.auth.separator}</span></div>
           </>
         )}
 
         <form onSubmit={onSubmit} className="modal-form">
           <label className="modal-label">
-            <span className="mono">Email</span>
+            <span className="mono">{t.auth.email_label}</span>
             <input
               type="email" required value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com" autoFocus
+              placeholder={t.auth.email_ph} autoFocus
               disabled={busy}
             />
           </label>
 
           {mode !== "forgot" && (
             <label className="modal-label">
-              <span className="mono">Contraseña</span>
+              <span className="mono">{t.auth.password_label}</span>
               <input
                 type="password" required value={pwd}
                 onChange={(e) => setPwd(e.target.value)}
-                placeholder={mode === "signup" ? "Mínimo 8 caracteres" : "Tu contraseña"}
+                placeholder={mode === "signup" ? t.auth.password_ph_signup : t.auth.password_ph_login}
                 disabled={busy} minLength={mode === "signup" ? 8 : undefined}
               />
             </label>
@@ -172,11 +173,11 @@ function LoginModal({ open, onClose, onLoggedIn }) {
 
           {mode === "signup" && (
             <label className="modal-label">
-              <span className="mono">Repite la contraseña</span>
+              <span className="mono">{t.auth.password_repeat_label}</span>
               <input
                 type="password" required value={pwd2}
                 onChange={(e) => setPwd2(e.target.value)}
-                placeholder="Repite la contraseña"
+                placeholder={t.auth.password_repeat_label}
                 disabled={busy}
               />
             </label>
@@ -186,10 +187,10 @@ function LoginModal({ open, onClose, onLoggedIn }) {
           {info && <div className="modal-info">{info}</div>}
 
           <button className="btn btn-primary modal-submit" type="submit" disabled={busy}>
-            {busy ? "..." : (
-              mode === "login" ? "Entrar" :
-              mode === "signup" ? "Crear cuenta" :
-              "Enviar email"
+            {busy ? t.auth.submitting : (
+              mode === "login" ? t.auth.submit_login :
+              mode === "signup" ? t.auth.submit_signup :
+              t.auth.submit_forgot
             )}
           </button>
         </form>
@@ -198,22 +199,22 @@ function LoginModal({ open, onClose, onLoggedIn }) {
           {mode === "login" && (
             <>
               <button className="link-btn" onClick={() => { setErr(""); setInfo(""); setMode("forgot"); }}>
-                ¿Olvidaste tu contraseña?
+                {t.auth.forgot_link}
               </button>
               <span className="text-dim"> · </span>
               <button className="link-btn" onClick={() => { setErr(""); setInfo(""); setMode("signup"); }}>
-                Crear cuenta nueva
+                {t.auth.signup_link}
               </button>
             </>
           )}
           {mode === "signup" && (
             <button className="link-btn" onClick={() => { setErr(""); setInfo(""); setMode("login"); }}>
-              ¿Ya tienes cuenta? Inicia sesión
+              {t.auth.to_login_link}
             </button>
           )}
           {mode === "forgot" && (
             <button className="link-btn" onClick={() => { setErr(""); setInfo(""); setMode("login"); }}>
-              Volver al inicio de sesión
+              {t.auth.back_to_login}
             </button>
           )}
         </div>
@@ -224,6 +225,7 @@ function LoginModal({ open, onClose, onLoggedIn }) {
 
 /* ===== User Dropdown (cuando está logueado) ===== */
 function UserDropdown({ user, admin, onLogout }) {
+  const { t } = useApp();
   const [open, setOpen] = _useState(false);
   const ref = _useRef(null);
 
@@ -258,22 +260,22 @@ function UserDropdown({ user, admin, onLogout }) {
           </div>
           <a href="cuenta.html" className="user-menu__item">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Mi perfil
+            {t.nav.profile}
           </a>
           <a href="cuenta.html#suscripciones" className="user-menu__item">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>
-            Suscripciones
+            {t.nav.subscriptions}
           </a>
           {admin && (
             <a href="admin.html" className="user-menu__item user-menu__item--admin">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Admin
+              {t.nav.admin}
             </a>
           )}
           <div className="user-menu__sep"></div>
           <button className="user-menu__item user-menu__item--danger" onClick={onLogout}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-            Cerrar sesión
+            {t.nav.logout}
           </button>
         </div>
       )}
@@ -283,6 +285,7 @@ function UserDropdown({ user, admin, onLogout }) {
 
 /* ===== AuthSlot: pone el botón de login O el dropdown de usuario ===== */
 function AuthSlot() {
+  const { t } = useApp();
   const auth = useAuthState();
 
   if (auth.loading) {
@@ -296,10 +299,9 @@ function AuthSlot() {
   }
 
   // Sin sesión: enlace directo a la página de cuenta (que muestra login).
-  // Más robusto que un modal in-place con Babel standalone.
   return (
     <a href="cuenta.html" className="btn btn-ghost btn-sm">
-      Acceso clientes
+      {t.nav.access}
     </a>
   );
 }

@@ -1179,6 +1179,10 @@ function BlogEditor({ post, categories, onClose }) {
     subtitle:        post?.subtitle        || "",
     excerpt:         post?.excerpt         || "",
     body_md:         post?.body_md         || "",
+    title_en:        post?.title_en        || "",
+    subtitle_en:     post?.subtitle_en     || "",
+    excerpt_en:      post?.excerpt_en      || "",
+    body_md_en:      post?.body_md_en      || "",
     category_slug:   post?.category_slug   || "",
     tags:            (post?.tags || []).join(", "),
     cover_image_url: post?.cover_image_url || "",
@@ -1189,6 +1193,7 @@ function BlogEditor({ post, categories, onClose }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null); // { type: 'ok'|'err', text }
   const [savedId, setSavedId] = useState(post?.id || null);
+  const [activeLang, setActiveLang] = useState("es"); // 'es' | 'en' — solo para tabs
 
   const upd = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -1211,6 +1216,10 @@ function BlogEditor({ post, categories, onClose }) {
     subtitle: form.subtitle.trim() || null,
     excerpt: form.excerpt.trim() || null,
     body_md: form.body_md,
+    title_en:    form.title_en.trim()    || null,
+    subtitle_en: form.subtitle_en.trim() || null,
+    excerpt_en:  form.excerpt_en.trim()  || null,
+    body_md_en:  form.body_md_en.trim() ? form.body_md_en : null,
     category_slug: form.category_slug || null,
     tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
     cover_image_url: form.cover_image_url.trim() || null,
@@ -1219,8 +1228,8 @@ function BlogEditor({ post, categories, onClose }) {
   });
 
   const validate = () => {
-    if (!form.title.trim()) return "Falta el título.";
-    if (!(form.slug.trim() || autoSlug(form.title))) return "Falta el slug.";
+    if (!form.title.trim() && !form.title_en.trim()) return "Falta el título (en al menos un idioma).";
+    if (!(form.slug.trim() || autoSlug(form.title) || autoSlug(form.title_en))) return "Falta el slug.";
     return null;
   };
 
@@ -1262,16 +1271,18 @@ function BlogEditor({ post, categories, onClose }) {
     onClose();
   };
 
-  // Preview HTML
+  // Preview HTML — muestra el cuerpo del idioma activo
+  const activeBody = activeLang === "en" ? form.body_md_en : form.body_md;
+  const activeTitle = activeLang === "en" ? form.title_en : form.title;
   const previewHtml = useMemo(() => {
-    if (!form.body_md) return "";
+    if (!activeBody) return "";
     try {
-      const raw = window.marked ? window.marked.parse(form.body_md, { breaks: true, gfm: true }) : "";
+      const raw = window.marked ? window.marked.parse(activeBody, { breaks: true, gfm: true }) : "";
       return window.DOMPurify ? window.DOMPurify.sanitize(raw) : raw;
     } catch (_) { return ""; }
-  }, [form.body_md]);
+  }, [activeBody]);
 
-  const readingTime = Math.max(1, Math.ceil((form.body_md || "").length / 1500));
+  const readingTime = Math.max(1, Math.ceil((Math.max(form.body_md.length, form.body_md_en.length)) / 1500));
   const isPublished = form.status === "published";
 
   return (
@@ -1281,12 +1292,12 @@ function BlogEditor({ post, categories, onClose }) {
           <button className="adm-link" onClick={onClose} style={{ marginBottom: 10 }}>← Volver al listado</button>
           <div className="eyebrow">— {isNew && !savedId ? "Nuevo artículo" : "Editar artículo"}</div>
           <h2 className="display adm-h2" style={{ marginTop: 6 }}>
-            {form.title || <span className="text-dim">(Sin título)</span>}
+            {activeTitle || form.title || form.title_en || <span className="text-dim">(Sin título)</span>}
           </h2>
           <div className="mono text-dim" style={{ fontSize: 12, marginTop: 4 }}>
             <BlogStatusBadge s={form.status} /> &nbsp;·&nbsp;
             {readingTime} min de lectura &nbsp;·&nbsp;
-            {form.body_md.length} caracteres
+            ES: {form.body_md.length} car · EN: {form.body_md_en.length} car
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -1328,14 +1339,125 @@ function BlogEditor({ post, categories, onClose }) {
       <div className={"blog-editor__grid " + (showPreview ? "is-split" : "is-single")}>
         {/* === COLUMNA IZQUIERDA: FORMULARIO === */}
         <div className="blog-editor__form">
-          <Field label="Título">
-            <input
-              className="input"
-              value={form.title}
-              onChange={(e) => onTitleChange(e.target.value)}
-              placeholder="Ej: La Fed sube tipos: qué cambia para tu cartera"
-            />
-          </Field>
+
+          {/* Tabs ES / EN — el slug, tags, categoría, autor, imagen son comunes */}
+          <div className="blog-editor__lang-tabs">
+            <button
+              type="button"
+              className={"blog-editor__lang-tab" + (activeLang === "es" ? " is-active" : "")}
+              onClick={() => setActiveLang("es")}
+            >
+              🇪🇸 Español
+              {form.title.trim() && <span className="blog-editor__lang-dot" title="Contenido en ES" />}
+            </button>
+            <button
+              type="button"
+              className={"blog-editor__lang-tab" + (activeLang === "en" ? " is-active" : "")}
+              onClick={() => setActiveLang("en")}
+            >
+              🇬🇧 English
+              {form.title_en.trim() && <span className="blog-editor__lang-dot" title="Contenido en EN" />}
+            </button>
+            <span className="blog-editor__lang-hint text-dim mono">
+              Puedes rellenar uno o ambos idiomas. Si solo hay uno, el blog mostrará un aviso al lector.
+            </span>
+          </div>
+
+          {activeLang === "es" && (
+            <>
+              <Field label="Título (ES)">
+                <input
+                  className="input"
+                  value={form.title}
+                  onChange={(e) => onTitleChange(e.target.value)}
+                  placeholder="Ej: La Fed sube tipos: qué cambia para tu cartera"
+                />
+              </Field>
+
+              <Field label="Subtítulo ES (opcional)">
+                <input
+                  className="input"
+                  value={form.subtitle}
+                  onChange={(e) => upd({ subtitle: e.target.value })}
+                  placeholder="Subtítulo o gancho que se ve bajo el título"
+                />
+              </Field>
+
+              <Field label="Resumen ES (excerpt — sale en la lista del blog)">
+                <textarea
+                  className="input"
+                  rows={2}
+                  value={form.excerpt}
+                  onChange={(e) => upd({ excerpt: e.target.value })}
+                  placeholder="2-3 frases de resumen para la portada del blog y el SEO."
+                />
+              </Field>
+
+              <Field label="Cuerpo ES (Markdown)">
+                <textarea
+                  className="input mono blog-editor__body"
+                  value={form.body_md}
+                  onChange={(e) => upd({ body_md: e.target.value })}
+                  placeholder={"# Título de sección\n\nUn párrafo de introducción.\n\n## Subsección\n\n- Punto uno\n- Punto dos\n\n> Una cita relevante.\n\n**Negrita** y *cursiva*."}
+                  spellCheck={true}
+                />
+                <span className="text-dim mono" style={{ fontSize: 11 }}>
+                  Soporta Markdown: <code>#</code> títulos, <code>**negrita**</code>, <code>*cursiva*</code>,
+                  <code>[enlace](url)</code>, <code>&gt; cita</code>, listas con <code>-</code>.
+                </span>
+              </Field>
+            </>
+          )}
+
+          {activeLang === "en" && (
+            <>
+              <Field label="Title (EN)">
+                <input
+                  className="input"
+                  value={form.title_en}
+                  onChange={(e) => upd({ title_en: e.target.value })}
+                  placeholder="E.g.: The Fed raises rates: what changes for your portfolio"
+                />
+              </Field>
+
+              <Field label="Subtitle EN (optional)">
+                <input
+                  className="input"
+                  value={form.subtitle_en}
+                  onChange={(e) => upd({ subtitle_en: e.target.value })}
+                  placeholder="Subtitle or hook shown under the title"
+                />
+              </Field>
+
+              <Field label="Summary EN (excerpt — shown in the blog list)">
+                <textarea
+                  className="input"
+                  rows={2}
+                  value={form.excerpt_en}
+                  onChange={(e) => upd({ excerpt_en: e.target.value })}
+                  placeholder="2-3 sentences summarising the post for the blog list and SEO."
+                />
+              </Field>
+
+              <Field label="Body EN (Markdown)">
+                <textarea
+                  className="input mono blog-editor__body"
+                  value={form.body_md_en}
+                  onChange={(e) => upd({ body_md_en: e.target.value })}
+                  placeholder={"# Section title\n\nIntro paragraph.\n\n## Subsection\n\n- Point one\n- Point two\n\n> A relevant quote.\n\n**Bold** and *italic*."}
+                  spellCheck={true}
+                />
+                <span className="text-dim mono" style={{ fontSize: 11 }}>
+                  Markdown supported: <code>#</code> headings, <code>**bold**</code>, <code>*italic*</code>,
+                  <code>[link](url)</code>, <code>&gt; quote</code>, lists with <code>-</code>.
+                </span>
+              </Field>
+            </>
+          )}
+
+          {/* Campos comunes a ambos idiomas */}
+          <hr className="blog-editor__sep" />
+          <div className="text-dim mono" style={{ fontSize: 11, marginBottom: 8 }}>— Comunes a ambos idiomas</div>
 
           <div className="blog-editor__row">
             <Field label="Slug (URL)">
@@ -1364,25 +1486,6 @@ function BlogEditor({ post, categories, onClose }) {
             </Field>
           </div>
 
-          <Field label="Subtítulo (opcional)">
-            <input
-              className="input"
-              value={form.subtitle}
-              onChange={(e) => upd({ subtitle: e.target.value })}
-              placeholder="Subtítulo o gancho que se ve bajo el título"
-            />
-          </Field>
-
-          <Field label="Resumen (excerpt — sale en la lista del blog)">
-            <textarea
-              className="input"
-              rows={2}
-              value={form.excerpt}
-              onChange={(e) => upd({ excerpt: e.target.value })}
-              placeholder="2-3 frases de resumen para la portada del blog y el SEO."
-            />
-          </Field>
-
           <div className="blog-editor__row">
             <Field label="Tags (separados por comas)">
               <input
@@ -1410,26 +1513,14 @@ function BlogEditor({ post, categories, onClose }) {
               placeholder="Equipo Stako"
             />
           </Field>
-
-          <Field label="Cuerpo (Markdown)">
-            <textarea
-              className="input mono blog-editor__body"
-              value={form.body_md}
-              onChange={(e) => upd({ body_md: e.target.value })}
-              placeholder={"# Título de sección\n\nUn párrafo de introducción.\n\n## Subsección\n\n- Punto uno\n- Punto dos\n\n> Una cita relevante.\n\n**Negrita** y *cursiva*."}
-              spellCheck={true}
-            />
-            <span className="text-dim mono" style={{ fontSize: 11 }}>
-              Soporta Markdown: <code>#</code> títulos, <code>**negrita**</code>, <code>*cursiva*</code>,
-              <code>[enlace](url)</code>, <code>&gt; cita</code>, listas con <code>-</code>.
-            </span>
-          </Field>
         </div>
 
         {/* === COLUMNA DERECHA: PREVIEW === */}
         {showPreview && (
           <aside className="blog-editor__preview">
-            <div className="blog-editor__preview-head mono text-dim">— Vista previa</div>
+            <div className="blog-editor__preview-head mono text-dim">
+              — Vista previa <span className="blog-editor__preview-lang">({activeLang.toUpperCase()})</span>
+            </div>
             <article className="blog-article" style={{ padding: 0 }}>
               <div className="blog-article__inner" style={{ maxWidth: "100%" }}>
                 {form.category_slug && (
@@ -1438,13 +1529,15 @@ function BlogEditor({ post, categories, onClose }) {
                   </div>
                 )}
                 <h1 className="display blog-article__title" style={{ fontSize: "clamp(28px, 4vw, 40px)" }}>
-                  {form.title || <span className="text-dim">(Sin título)</span>}
+                  {activeTitle || <span className="text-dim">{activeLang === "en" ? "(No title)" : "(Sin título)"}</span>}
                 </h1>
-                {form.subtitle && <p className="blog-article__subtitle text-muted">{form.subtitle}</p>}
+                {(activeLang === "en" ? form.subtitle_en : form.subtitle) && (
+                  <p className="blog-article__subtitle text-muted">{activeLang === "en" ? form.subtitle_en : form.subtitle}</p>
+                )}
                 <div className="blog-article__meta">
                   <span className="mono">{form.author || "Equipo Stako"}</span>
                   <span className="dot-sep">·</span>
-                  <span className="mono">Hoy</span>
+                  <span className="mono">{activeLang === "en" ? "Today" : "Hoy"}</span>
                   <span className="dot-sep">·</span>
                   <span className="mono">{readingTime} min</span>
                 </div>
@@ -1457,7 +1550,7 @@ function BlogEditor({ post, categories, onClose }) {
                   <div className="blog-article__body" dangerouslySetInnerHTML={{ __html: previewHtml }} />
                 ) : (
                   <div className="blog-article__body text-dim">
-                    <em>El cuerpo del artículo aparecerá aquí.</em>
+                    <em>{activeLang === "en" ? "The article body will appear here." : "El cuerpo del artículo aparecerá aquí."}</em>
                   </div>
                 )}
                 {form.tags && form.tags.trim() && (
