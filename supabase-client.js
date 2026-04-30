@@ -72,7 +72,8 @@
       body: JSON.stringify({
         email, password,
         options: {
-          emailRedirectTo: window.location.origin + "/cuenta.html",
+          // Tras pulsar el enlace del correo, Supabase manda al usuario aquí
+          emailRedirectTo: window.location.origin + "/confirmado.html",
         },
       }),
     });
