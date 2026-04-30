@@ -484,13 +484,12 @@ function Waitlist() {
   const [count, setCount] = useState(null);
 
   // Real count from Supabase. We don't pad with a fake baseline.
-  const BASELINE = 0;
   React.useEffect(() => {
     let alive = true;
     if (window.StakoSupabase) {
       window.StakoSupabase.getWaitlistCount().then((n) => {
         if (!alive) return;
-        if (typeof n === "number") setCount(BASELINE + n);
+        if (typeof n === "number") setCount(n);
       });
     }
     return () => { alive = false; };
@@ -526,7 +525,7 @@ function Waitlist() {
       const res = await window.StakoSupabase.joinWaitlist({ email: value, lang });
       if (res.ok) {
         setStatus("done");
-        setCount((c) => (c == null ? BASELINE + 1 : c + 1));
+        setCount((c) => (c == null ? 1 : c + 1));
         return;
       }
       if (res.duplicate) {
@@ -575,11 +574,15 @@ function Waitlist() {
                   <div className="waitlist__error mono">{errorMsg()}</div>
                 )}
                 <div className="waitlist__meta mono">
-                  <span>
-                    <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", marginRight: 6, verticalAlign: "middle" }}></span>
-                    {(count ?? BASELINE).toLocaleString()} {w.n_waiting}
-                  </span>
-                  <span className="text-dim">·</span>
+                  {count != null && (
+                    <>
+                      <span>
+                        <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", marginRight: 6, verticalAlign: "middle" }}></span>
+                        {count.toLocaleString()} {w.n_waiting}
+                      </span>
+                      <span className="text-dim">·</span>
+                    </>
+                  )}
                   <span className="text-dim">{w.legal}</span>
                 </div>
               </>

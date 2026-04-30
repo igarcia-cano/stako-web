@@ -25,6 +25,8 @@ _v.txt
 _ve.txt
 # Catch-all para archivos temporales generados por scripts
 _*.txt
+_*.py
+_*.bat
 
 # Variables de entorno
 .env
