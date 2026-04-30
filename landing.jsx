@@ -483,8 +483,8 @@ function Waitlist() {
   const [errorKind, setErrorKind] = useState(null); // duplicate | invalid | network
   const [count, setCount] = useState(null);
 
-  // Initial count from Supabase + a baseline floor for social proof
-  const BASELINE = 1247;
+  // Real count from Supabase. We don't pad with a fake baseline.
+  const BASELINE = 0;
   React.useEffect(() => {
     let alive = true;
     if (window.StakoSupabase) {
