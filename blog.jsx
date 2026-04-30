@@ -46,15 +46,18 @@ function _bBuildPostUrl(slug) {
    ------------------------------------------------------------ */
 function _bLocalizePost(post, lang) {
   if (!post) return null;
-  const hasEN = !!(post.title_en && post.title_en.trim() && post.body_md_en && post.body_md_en.trim());
-  const hasES = !!(post.title && post.title.trim() && post.body_md && post.body_md.trim());
+  // En el listing del blog NO viene body_md (se omite por tamaño en el SELECT),
+  // así que decidimos hasEN/hasES solo por el título. Para el detalle (que usa
+  // select=*), body_md y body_md_en vienen automáticamente.
+  const hasEN = !!(post.title_en && post.title_en.trim());
+  const hasES = !!(post.title    && post.title.trim());
 
   if (lang === "en" && hasEN) {
     return {
       title:    post.title_en,
       subtitle: post.subtitle_en || "",
       excerpt:  post.excerpt_en  || "",
-      body:     post.body_md_en,
+      body:     post.body_md_en  || "",
       isFallback: false,
       originalLang: "en",
     };
@@ -64,7 +67,7 @@ function _bLocalizePost(post, lang) {
       title:    post.title,
       subtitle: post.subtitle || "",
       excerpt:  post.excerpt  || "",
-      body:     post.body_md,
+      body:     post.body_md  || "",
       isFallback: true,
       originalLang: "es",
     };
@@ -74,7 +77,7 @@ function _bLocalizePost(post, lang) {
       title:    post.title,
       subtitle: post.subtitle || "",
       excerpt:  post.excerpt  || "",
-      body:     post.body_md,
+      body:     post.body_md  || "",
       isFallback: false,
       originalLang: "es",
     };
@@ -84,7 +87,7 @@ function _bLocalizePost(post, lang) {
       title:    post.title_en,
       subtitle: post.subtitle_en || "",
       excerpt:  post.excerpt_en  || "",
-      body:     post.body_md_en,
+      body:     post.body_md_en  || "",
       isFallback: true,
       originalLang: "en",
     };
