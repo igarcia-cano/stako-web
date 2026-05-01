@@ -2397,3 +2397,100 @@ section { padding-block: clamp(72px, 10vw, 140px); }
   line-height: 1.5;
   color: var(--fg-muted, var(--text-dim));
 }
+
+
+/* ============================================================
+   FONDO AURORA — Stako (activado vía body.has-aurora)
+   Tres blobs verdes/oro flotando muy lentamente + grano sutil.
+   z-index 0 (encima del body) y debajo del #root (z-index 1).
+   ============================================================ */
+
+.stk-aurora {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+body:not(.has-aurora) .stk-aurora { display: none; }
+
+body.has-aurora #root {
+  position: relative;
+  z-index: 1;
+}
+
+.stk-aurora__base {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(1200px 600px at 50% 0%, rgba(105, 212, 147, 0.06), transparent 60%);
+}
+
+.stk-aurora__blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+.stk-aurora__blob--1 {
+  width: 560px;
+  height: 560px;
+  background: radial-gradient(circle, rgba(105, 212, 147, 0.30), transparent 60%);
+  top: -180px;
+  left: -140px;
+  animation: stk-aurora-flow1 38s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.stk-aurora__blob--2 {
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(217, 194, 133, 0.16), transparent 60%);
+  bottom: -200px;
+  right: -160px;
+  animation: stk-aurora-flow2 46s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.stk-aurora__blob--3 {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(105, 212, 147, 0.10), transparent 60%);
+  top: 35%;
+  left: 40%;
+  transform: translate(-50%, -50%);
+  animation: stk-aurora-flow3 52s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.stk-aurora__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>");
+}
+
+@keyframes stk-aurora-flow1 {
+  0%, 100% { transform: translate(0, 0); }
+  33%      { transform: translate(120px, 80px); }
+  66%      { transform: translate(40px, 180px); }
+}
+
+@keyframes stk-aurora-flow2 {
+  0%, 100% { transform: translate(0, 0); }
+  33%      { transform: translate(-100px, -60px); }
+  66%      { transform: translate(-180px, 40px); }
+}
+
+@keyframes stk-aurora-flow3 {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%      { transform: translate(-30%, -60%) scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stk-aurora__blob { animation: none !important; }
+}
+
+/* En tema claro, atenuamos los blobs para no romper el contraste */
+[data-theme="light"] .stk-aurora__blob { opacity: 0.35; filter: blur(80px); }
+[data-theme="light"] .stk-aurora__grain { opacity: 0.025; mix-blend-mode: multiply; }
