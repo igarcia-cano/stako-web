@@ -1,0 +1,30 @@
+# Verificar URLs de imágenes Unsplash candidatas
+$urls = @(
+    'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1600&q=80',
+    'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=1600&q=80',
+    'https://images.unsplash.com/photo-1554224155-1696413565d3?w=1600&q=80',
+    'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=1600&q=80',
+    'https://images.unsplash.com/photo-1565514020179-026b92b84bb6?w=1600&q=80',
+    'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=1600&q=80',
+    'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=1600&q=80',
+    'https://images.unsplash.com/photo-1565514020179-026b92b84bb6?w=1600&q=80',
+    'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1600&q=80',
+    'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1600&q=80',
+    'https://images.unsplash.com/photo-1518544866330-95a2bec01f9c?w=1600&q=80',
+    'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?w=1600&q=80',
+    'https://images.unsplash.com/photo-1494412519320-aa613dfb7738?w=1600&q=80',
+    'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1600&q=80',
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80',
+    'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=1600&q=80',
+    'https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=1600&q=80'
+)
+
+foreach ($u in $urls) {
+    try {
+        $r = Invoke-WebRequest -Uri $u -UseBasicParsing -Method Head -TimeoutSec 12
+        Write-Host ("{0}  {1}" -f $r.StatusCode, $u)
+    } catch {
+        $code = if ($_.Exception.Response) { $_.Exception.Response.StatusCode.value__ } else { 'ERR' }
+        Write-Host ("{0}  {1}" -f $code, $u)
+    }
+}

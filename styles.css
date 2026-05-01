@@ -2494,3 +2494,343 @@ body.has-aurora #root {
 /* En tema claro, atenuamos los blobs para no romper el contraste */
 [data-theme="light"] .stk-aurora__blob { opacity: 0.35; filter: blur(80px); }
 [data-theme="light"] .stk-aurora__grain { opacity: 0.025; mix-blend-mode: multiply; }
+
+
+/* ============================================================
+   FONDO CONSTELACIÓN — Stako (activado vía body.has-constellation)
+   Canvas a pantalla completa, debajo del #root.
+   El JS lo dibuja en /constellation.js. Los puntos siguen al
+   cursor con un efecto magnético sutil.
+   ============================================================ */
+
+.stk-constellation {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+body:not(.has-constellation) .stk-constellation { display: none; }
+
+body.has-constellation #root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   BLOG · MODO QUIOSCO
+   Layout editorial inspirado en periódico financiero.
+   Hero con cabecera de doble línea oro, featured story
+   asimétrico, secciones por categoría con cards densas.
+   ============================================================ */
+
+.blog-kiosk-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+  border-bottom: 2px solid var(--gold);
+  padding: 8px 0 12px;
+  margin: 0 0 28px;
+}
+.blog-kiosk-hero__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 52px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--fg);
+}
+.blog-kiosk-hero__meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: right;
+  line-height: 1.6;
+  flex-shrink: 0;
+}
+.blog-kiosk-hero__meta b {
+  display: block;
+  color: var(--gold);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Featured story (post destacado) */
+.blog-featured {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 32px;
+  padding: 0 0 32px;
+  margin: 0 0 32px;
+  border-bottom: 0.5px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+}
+.blog-featured__cover {
+  aspect-ratio: 5 / 4;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  position: relative;
+  border: 0.5px solid var(--border);
+}
+.blog-featured__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.blog-featured:hover .blog-featured__cover img { transform: scale(1.04); }
+.blog-featured__ribbon {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(10, 11, 13, 0.78);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 0.5px solid var(--border-strong);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+.blog-featured__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+.blog-featured__cat {
+  margin: 0 0 14px;
+}
+.blog-featured__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3.6vw, 38px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  color: var(--fg);
+  transition: color 0.25s ease;
+}
+.blog-featured:hover .blog-featured__title { color: var(--gold); }
+.blog-featured__excerpt {
+  font-size: 14px;
+  color: var(--fg-muted);
+  line-height: 1.6;
+  margin: 0 0 18px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.blog-featured__cta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.blog-featured__arrow {
+  width: 32px;
+  height: 1px;
+  background: var(--gold);
+  transition: width 0.3s ease;
+}
+.blog-featured:hover .blog-featured__arrow { width: 52px; }
+
+/* Sección por categoría */
+.blog-section {
+  margin: 0 0 32px;
+}
+.blog-section__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 18px;
+}
+.blog-section__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.blog-section__line {
+  flex: 1;
+  height: 0.5px;
+  background: var(--border);
+}
+.blog-section__count {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.blog-section__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+/* Card compacta (modo quiosco) */
+.blog-card-c {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  min-width: 0;
+}
+.blog-card-c:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+.blog-card-c__cover {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--bg-elev);
+  flex-shrink: 0;
+}
+.blog-card-c__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s ease;
+}
+.blog-card-c:hover .blog-card-c__cover img { transform: scale(1.05); }
+.blog-card-c__cover--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.blog-card-c__body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.blog-card-c__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.18;
+  letter-spacing: -0.005em;
+  margin: 0;
+  color: var(--fg);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.25s ease;
+}
+.blog-card-c:hover .blog-card-c__title { color: var(--gold); }
+.blog-card-c__meta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  margin-top: auto;
+}
+.blog-card-c__meta .lang-warn {
+  color: var(--gold);
+  margin-left: 6px;
+}
+
+/* Banner cuando NO hay nada en el filtro/búsqueda */
+.blog-section--empty {
+  padding: 28px 22px;
+  border: 0.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+  text-align: center;
+  color: var(--fg-muted);
+  font-size: 13.5px;
+}
+
+/* Animaciones de entrada (sutiles) */
+.blog-featured,
+.blog-section,
+.blog-kiosk-hero {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: stk-blog-up 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.blog-kiosk-hero { animation-delay: 0.05s; }
+.blog-featured { animation-delay: 0.15s; }
+.blog-section:nth-of-type(1) { animation-delay: 0.25s; }
+.blog-section:nth-of-type(2) { animation-delay: 0.30s; }
+.blog-section:nth-of-type(3) { animation-delay: 0.35s; }
+.blog-section:nth-of-type(4) { animation-delay: 0.40s; }
+.blog-section:nth-of-type(5) { animation-delay: 0.45s; }
+.blog-section:nth-of-type(6) { animation-delay: 0.50s; }
+
+@keyframes stk-blog-up {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-featured,
+  .blog-section,
+  .blog-kiosk-hero {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+  .blog-section__grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+}
+@media (max-width: 720px) {
+  .blog-featured {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding-bottom: 24px;
+    margin-bottom: 24px;
+  }
+  .blog-featured__cover { aspect-ratio: 16 / 10; }
+  .blog-kiosk-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .blog-kiosk-hero__meta { text-align: left; }
+}
+@media (max-width: 480px) {
+  .blog-section__grid { grid-template-columns: 1fr; }
+}
+
+/* En tema claro: ribbon con menos blur */
+[data-theme="light"] .blog-featured__ribbon {
+  background: rgba(255, 255, 255, 0.78);
+}

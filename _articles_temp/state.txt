@@ -1,0 +1,34 @@
+=== Categorias ===
+  actualidad   -> Actualidad
+  macro        -> Macro y bancos centrales
+  mercados     -> Mercados
+  largo-plazo  -> Inversi¢n a largo plazo
+  educacion    -> Educaci¢n financiera
+  historia     -> An lisis e historia
+  libros       -> Rese¤as de libros
+
+=== Posts publicados ===
+Total publicados: 10
+  [actualidad  ] oro-dolar-activos-refugio-guerra-economia
+       Cuando hay guerra, el oro sube y el d¢lar tambi‚n: por qu‚ los activos refugio funcionan distinto
+  [actualidad  ] musk-altman-openai-juicio-estructura-empresas-ia
+       Musk contra Altman: el juicio que decide la estructura de OpenAI y por qu‚ importa al mundo financiero
+  [actualidad  ] tesla-capex-2026-optimus-cybercab-chips-ia
+       Tesla triplica su inversi¢n en 2026: qu‚ significa cuando una empresa apuesta el triple por el futuro
+  [actualidad  ] gasto-militar-economia-deuda-inflacion-fmi
+       Cuando un pa¡s aumenta el gasto militar, ¨de d¢nde sale ese dinero? El FMI tiene la respuesta
+  [actualidad  ] estrecho-ormuz-petroleo-gasolina-impacto-economico
+       El Estrecho de Ormuz: por qu‚ cuando se cierra una franja de mar de 33 km todo el mundo paga m s en la gasolina
+  [macro       ] que-hace-banco-central-fontaneria-economia
+       Qu‚ hace exactamente un banco central: la fontaner¡a que mueve la econom¡a
+  [historia    ] crash-1929-semana-cambio-wall-street
+       1929: la semana en la que Wall Street descubri¢ que tambi‚n pod¡a bajar
+  [educacion   ] interes-compuesto-matematica-cambia-tiempo
+       Inter‚s compuesto: la matem tica que cambia c¢mo entendemos el tiempo
+  [educacion   ] inflacion-que-es-como-se-mide-ipc
+       Inflaci¢n: qu‚ es exactamente y por qu‚ se mide as¡
+  [historia    ] tulipomania-primera-burbuja-financiera-historia
+       Tulipanes a precio de casa: la primera burbuja financiera de la historia
+
+=== Posts en otros estados ===
+Total no publicados: 0

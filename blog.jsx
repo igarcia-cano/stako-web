@@ -14,6 +14,12 @@ function _bFmtDate(iso, lang) {
   return d.toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" });
 }
 
+function _bFmtMonth(lang) {
+  const d = new Date();
+  const locale = lang === "en" ? "en-US" : "es-ES";
+  return d.toLocaleDateString(locale, { month: "long" });
+}
+
 function _bRenderMarkdown(md) {
   if (!md) return "";
   try {
@@ -137,13 +143,33 @@ function BlogListPage() {
     return () => { cancelled = true; };
   }, [activeCat, q]);
 
+  // Modo quiosco solo cuando no hay filtro ni búsqueda activa
+  const isKiosk = !activeCat && !q.trim();
+
   return (
     <div className="container blog-wrap">
-      <header className="blog-hero">
-        <div className="eyebrow">— {t.blog.hero_eyebrow}</div>
-        <h1 className="display blog-hero__title">{t.blog.hero_title}</h1>
-        <p className="blog-hero__sub text-muted">{t.blog.hero_sub}</p>
-      </header>
+      {isKiosk ? (
+        <header className="blog-kiosk-hero">
+          <h1 className="blog-kiosk-hero__title">{t.blog.kiosk_brand || "Stako"}</h1>
+          <div className="blog-kiosk-hero__meta">
+            <div>{t.blog.kiosk_meta_categories || t.blog.hero_sub}</div>
+            <b>
+              {(posts ? posts.length : 0)}{" "}
+              {(posts && posts.length === 1)
+                ? (t.blog.kiosk_meta_published_one || "publicado")
+                : (t.blog.kiosk_meta_published_other || "publicados")}
+              {" · "}
+              {t.blog.kiosk_edition_prefix || "Edición de"} {_bFmtMonth(lang)}
+            </b>
+          </div>
+        </header>
+      ) : (
+        <header className="blog-hero">
+          <div className="eyebrow">— {t.blog.hero_eyebrow}</div>
+          <h1 className="display blog-hero__title">{t.blog.hero_title}</h1>
+          <p className="blog-hero__sub text-muted">{t.blog.hero_sub}</p>
+        </header>
+      )}
 
       <div className="blog-toolbar">
         <div className="blog-cats">
@@ -179,12 +205,129 @@ function BlogListPage() {
         </div>
       )}
 
-      {posts !== null && posts.length > 0 && (
+      {posts !== null && posts.length > 0 && isKiosk && (
+        <BlogKioskoView posts={posts} categories={categories} lang={lang} t={t} />
+      )}
+
+      {posts !== null && posts.length > 0 && !isKiosk && (
         <div className="blog-grid">
           {posts.map((p) => <BlogCard key={p.id} post={p} lang={lang} t={t} />)}
         </div>
       )}
     </div>
+  );
+}
+
+/* === Modo Quiosco === */
+function BlogKioskoView({ posts, categories, lang, t }) {
+  if (!posts || posts.length === 0) return null;
+  const featured = posts[0];
+  const rest = posts.slice(1);
+
+  // Agrupar el resto por categoría manteniendo el orden de display_order
+  const byCat = {};
+  rest.forEach((p) => {
+    const k = p.category_slug || "_otros";
+    if (!byCat[k]) byCat[k] = [];
+    byCat[k].push(p);
+  });
+
+  // Construir secciones en el orden de las categorías oficiales
+  const sections = [];
+  categories.forEach((c) => {
+    const items = byCat[c.slug];
+    if (items && items.length > 0) {
+      sections.push({ slug: c.slug, name: c.name, items });
+      delete byCat[c.slug];
+    }
+  });
+  // Cola: cualquier categoría que apareciera en posts pero no en la lista oficial
+  Object.keys(byCat).forEach((k) => {
+    if (byCat[k] && byCat[k].length > 0) {
+      sections.push({ slug: k, name: k, items: byCat[k] });
+    }
+  });
+
+  return (
+    <React.Fragment>
+      <BlogFeatured post={featured} lang={lang} t={t} />
+      {sections.map((s) => (
+        <section key={s.slug} className="blog-section">
+          <header className="blog-section__header">
+            <span className="blog-section__label">{s.name}</span>
+            <span className="blog-section__line"></span>
+            <span className="blog-section__count">
+              {s.items.length}{" "}
+              {(s.items.length === 1)
+                ? (t.blog.kiosk_meta_published_one || "publicado")
+                : (t.blog.kiosk_meta_published_other || "publicados")}
+            </span>
+          </header>
+          <div className="blog-section__grid">
+            {s.items.slice(0, 6).map((p) => (
+              <BlogCardCompact key={p.id} post={p} lang={lang} t={t} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </React.Fragment>
+  );
+}
+
+/* Featured story (modo quiosco) */
+function BlogFeatured({ post, lang, t }) {
+  const url = _bBuildPostUrl(post.slug);
+  const loc = _bLocalizePost(post, lang);
+  return (
+    <a href={url} className="blog-featured">
+      <div className="blog-featured__cover">
+        {post.cover_image_url ? (
+          <img src={post.cover_image_url} alt="" loading="eager" />
+        ) : null}
+        <div className="blog-featured__ribbon">{t.blog.featured_ribbon || "Lo destacado"}</div>
+      </div>
+      <div className="blog-featured__body">
+        <div className="blog-featured__cat eyebrow">
+          — {post.category_slug} · {post.reading_time_min} {t.blog.reading_time}
+        </div>
+        <h2 className="blog-featured__title">{loc.title}</h2>
+        {loc.excerpt && <p className="blog-featured__excerpt">{loc.excerpt}</p>}
+        <div className="blog-featured__cta">
+          <span className="blog-featured__arrow"></span>
+          <span>{t.blog.read_article || "Leer artículo"}</span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+/* Card compacta (modo quiosco) */
+function BlogCardCompact({ post, lang, t }) {
+  const url = _bBuildPostUrl(post.slug);
+  const loc = _bLocalizePost(post, lang);
+  return (
+    <a href={url} className="blog-card-c">
+      {post.cover_image_url ? (
+        <div className="blog-card-c__cover">
+          <img src={post.cover_image_url} alt="" loading="lazy" />
+        </div>
+      ) : (
+        <div className="blog-card-c__cover blog-card-c__cover--placeholder">
+          <span>Stako</span>
+        </div>
+      )}
+      <div className="blog-card-c__body">
+        <h4 className="blog-card-c__title">{loc.title}</h4>
+        <div className="blog-card-c__meta">
+          {post.reading_time_min} {t.blog.reading_time}
+          {" · "}
+          {_bFmtDate(post.published_at, lang)}
+          {loc.isFallback && (
+            <span className="lang-warn">· {loc.originalLang.toUpperCase()}</span>
+          )}
+        </div>
+      </div>
+    </a>
   );
 }
 
