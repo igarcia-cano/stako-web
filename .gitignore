@@ -27,6 +27,15 @@ _ve.txt
 _*.txt
 _*.py
 _*.bat
+_*.ps1
+_*.js
+_*.json
+_*.md
+
+# Carpetas de scratch / drafts (no van al repo)
+_articles_temp/
+_drafts/
+_tmp/
 
 # Variables de entorno
 .env
