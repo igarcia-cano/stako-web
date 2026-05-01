@@ -60,25 +60,25 @@ function BotHero() {
 function BotHeroStats() {
   const { lang } = useApp();
   const stats = lang === "es" ? [
-    { l: "Pares activos", v: "BTC · ETH" },
-    { l: "Frecuencia", v: "1H" },
-    { l: "Indicadores", v: "RSI + EMA" },
-    { l: "Riesgo por trade", v: "máx. 1.5%" },
-    { l: "Capital mínimo", v: "$300 USDT" },
+    { l: "Pares activos", v: "BTC·ETH·SOL·BNB·ADA" },
+    { l: "Frecuencia", v: "4H" },
+    { l: "Estrategia", v: "Trend + Momentum" },
+    { l: "Riesgo por trade", v: "1.5%–2.8%" },
+    { l: "Capital mínimo", v: "50 USDC" },
     { l: "Notificación", v: "Telegram" },
   ] : [
-    { l: "Active pairs", v: "BTC · ETH" },
-    { l: "Frequency", v: "1H" },
-    { l: "Indicators", v: "RSI + EMA" },
-    { l: "Risk per trade", v: "max 1.5%" },
-    { l: "Min capital", v: "$300 USDT" },
+    { l: "Active pairs", v: "BTC·ETH·SOL·BNB·ADA" },
+    { l: "Frequency", v: "4H" },
+    { l: "Strategy", v: "Trend + Momentum" },
+    { l: "Risk per trade", v: "1.5%–2.8%" },
+    { l: "Min capital", v: "50 USDC" },
     { l: "Notifications", v: "Telegram" },
   ];
   return (
     <div className="bothero__stats card">
       <div className="bothero__stats-head">
         <div className="eyebrow">— {lang === "es" ? "Especificaciones" : "Specs"}</div>
-        <span className="tag tag-live"><span className="dot"></span>v0.1</span>
+        <span className="tag tag-live"><span className="dot"></span>v5A</span>
       </div>
       <dl className="specs">
         {stats.map((s) => (
@@ -134,7 +134,7 @@ function TelegramOnboarding() {
           </Reveal>
           <div className="telegram-sec__notes">
             {p.pipeline.map((step, idx) => {
-              const cmd = ["/start", "/setup", "/allocate", "/run"][idx] || "/cmd";
+              const cmd = ["/start", "/conectar", "/configurar", "/iniciar"][idx] || "/cmd";
               return (
                 <Reveal key={idx} className="tnote" delay={80 + idx * 80}>
                   <div className="tnote__num mono">{cmd}</div>
@@ -197,28 +197,28 @@ function useTelegramScript(lang) {
     {
       kind: "bot",
       title: "👋 Bienvenido a Stako Bot",
-      body: "Soy un bot de trading automático que opera con un capital aislado en tu cuenta de Binance. Tú me asignas un saldo de USDT y yo decido cuándo comprar y vender usando análisis técnico (RSI + EMA) con stop-loss y take-profit.",
+      body: "Soy un bot de trading automático que opera con un capital aislado en tu cuenta de Binance. Tú me asignas un saldo de USDC y yo decido cuándo comprar y vender usando estrategias trend-following en 4h sobre BTC, ETH, SOL, BNB y ADA.",
       buttons: ["⚙️ Conectar Binance", "📖 Cómo funciona"],
       time: "12:42",
     },
-    { kind: "user", text: "/setup" },
+    { kind: "user", text: "/conectar" },
     {
       kind: "bot",
       title: "🔐 Conexión con Binance",
-      body: "Para empezar, crea una API key en Binance con permisos SOLO de trading (jamás retiros). Pega aquí tu API key y secret. Tus claves se cifran y solo se usan para ejecutar órdenes.",
+      body: "Para empezar, crea una API key en Binance con permisos SOLO de Spot Trading (sin retiros, sin futuros). Pega aquí tu API key y secret. Tus claves se cifran y solo se usan para ejecutar órdenes.",
       time: "12:43",
     },
-    { kind: "user", text: "/allocate 1000" },
+    { kind: "user", text: "/configurar" },
     {
       kind: "bot",
-      title: "💼 Capital aislado fijado",
+      title: "💼 Configuración guardada",
       lines: [
-        { k: "Asignado", v: "1,000 USDT" },
-        { k: "Pares", v: "BTC/USDT, ETH/USDT" },
-        { k: "Riesgo / trade", v: "1.5%" },
-        { k: "TP / SL", v: "+3.2% / −1.5%" },
+        { k: "Capital", v: "1,000 USDC" },
+        { k: "Riesgo", v: "Moderado" },
+        { k: "Estrategia", v: "V5A multi-asset" },
+        { k: "Universo", v: "BTC·ETH·SOL·BNB·ADA" },
       ],
-      buttons: ["▶ Empezar /run", "⚙️ Ajustes"],
+      buttons: ["▶ Iniciar /iniciar", "📊 Estado"],
       time: "12:44",
     },
   ] : [
@@ -227,28 +227,28 @@ function useTelegramScript(lang) {
     {
       kind: "bot",
       title: "👋 Welcome to Stako Bot",
-      body: "I'm an automated trading bot that runs on isolated capital in your Binance account. You allocate me a USDT balance and I decide when to buy and sell using technical analysis (RSI + EMA) with stop-loss and take-profit.",
+      body: "I'm an automated trading bot that runs on isolated capital in your Binance account. You allocate me a USDC balance and I decide when to buy and sell using trend-following strategies on 4h candles across BTC, ETH, SOL, BNB and ADA.",
       buttons: ["⚙️ Connect Binance", "📖 How it works"],
       time: "12:42",
     },
-    { kind: "user", text: "/setup" },
+    { kind: "user", text: "/connect" },
     {
       kind: "bot",
       title: "🔐 Connect Binance",
-      body: "First, create an API key on Binance with TRADING-ONLY permissions (never withdraw). Paste your API key and secret here. Keys are encrypted and only used to execute orders.",
+      body: "First, create an API key on Binance with SPOT-TRADING-ONLY permissions (no withdrawals, no futures). Paste your API key and secret here. Keys are encrypted and only used to execute orders.",
       time: "12:43",
     },
-    { kind: "user", text: "/allocate 1000" },
+    { kind: "user", text: "/configure" },
     {
       kind: "bot",
-      title: "💼 Isolated capital set",
+      title: "💼 Configuration saved",
       lines: [
-        { k: "Allocated", v: "1,000 USDT" },
-        { k: "Pairs", v: "BTC/USDT, ETH/USDT" },
-        { k: "Risk / trade", v: "1.5%" },
-        { k: "TP / SL", v: "+3.2% / −1.5%" },
+        { k: "Capital", v: "1,000 USDC" },
+        { k: "Risk", v: "Moderate" },
+        { k: "Strategy", v: "V5A multi-asset" },
+        { k: "Universe", v: "BTC·ETH·SOL·BNB·ADA" },
       ],
-      buttons: ["▶ Start /run", "⚙️ Settings"],
+      buttons: ["▶ Start /start_trading", "📊 Status"],
       time: "12:44",
     },
   ];
@@ -272,17 +272,17 @@ function BotPipeline() {
   const p = t.bot_page;
   const isES = lang === "es";
   const steps = isES ? [
-    { tag: "01 · INPUT", title: "Datos de mercado", desc: "Velas 1H de Binance. Histórico continuo, sin huecos." },
-    { tag: "02 · SEÑAL", title: "RSI + EMA", desc: "RSI <30 (sobreventa) o >70 (sobrecompra). Cruce de EMA(9/21) confirma tendencia." },
-    { tag: "03 · VALIDACIÓN", title: "Filtro de riesgo", desc: "¿Hay capital? ¿No supera el riesgo máx? ¿API operativa? Si no, se descarta." },
-    { tag: "04 · EJECUCIÓN", title: "Orden en Binance", desc: "Orden limitada con SL y TP. Confirmación en milisegundos." },
-    { tag: "05 · NOTIFICACIÓN", title: "Telegram", desc: "Mensaje instantáneo con par, precio, cantidad, RSI, SL y TP." },
+    { tag: "01 · INPUT", title: "Datos de mercado", desc: "Velas 4H de Binance sobre BTC, ETH, SOL, BNB y ADA. Histórico continuo, sin huecos." },
+    { tag: "02 · SEÑAL", title: "Trend + Momentum", desc: "Filtro SMA-180 para tendencia. TSMOM-28d para momentum. ADX confirma fuerza del movimiento." },
+    { tag: "03 · VALIDACIÓN", title: "Filtro de riesgo", desc: "¿Hay capital? ¿La señal pasa los gates? ¿API operativa? Si no, se descarta." },
+    { tag: "04 · EJECUCIÓN", title: "Orden en Binance", desc: "Orden de mercado con stop-loss dinámico (Donchian + Chandelier). Confirmación en milisegundos." },
+    { tag: "05 · NOTIFICACIÓN", title: "Telegram", desc: "Mensaje instantáneo con par, precio, cantidad, score y motivo de la operación." },
   ] : [
-    { tag: "01 · INPUT", title: "Market data", desc: "1H candles from Binance. Continuous history, no gaps." },
-    { tag: "02 · SIGNAL", title: "RSI + EMA", desc: "RSI <30 (oversold) or >70 (overbought). EMA(9/21) crossover confirms trend." },
-    { tag: "03 · VALIDATION", title: "Risk filter", desc: "Capital available? Within max risk? API healthy? Otherwise, skip." },
-    { tag: "04 · EXECUTION", title: "Order on Binance", desc: "Limit order with SL and TP. Confirmation in milliseconds." },
-    { tag: "05 · NOTIFICATION", title: "Telegram", desc: "Instant message with pair, price, size, RSI, SL and TP." },
+    { tag: "01 · INPUT", title: "Market data", desc: "4H candles from Binance across BTC, ETH, SOL, BNB and ADA. Continuous history, no gaps." },
+    { tag: "02 · SIGNAL", title: "Trend + Momentum", desc: "SMA-180 trend filter. TSMOM-28d momentum. ADX confirms move strength." },
+    { tag: "03 · VALIDATION", title: "Risk filter", desc: "Capital available? Signal passes the gates? API healthy? Otherwise, skip." },
+    { tag: "04 · EXECUTION", title: "Order on Binance", desc: "Market order with dynamic stop-loss (Donchian + Chandelier). Confirmation in milliseconds." },
+    { tag: "05 · NOTIFICATION", title: "Telegram", desc: "Instant message with pair, price, size, score and reason for the trade." },
   ];
   return (
     <section className="pipeline">
@@ -303,11 +303,11 @@ function BotPipeline() {
           ))}
         </div>
         <Reveal className="pipeline__ascii mono" delay={500}>
-          <pre>{`     market data ─▶ RSI + EMA ─▶ risk filter ─▶ execution ─▶ telegram
-                       │                │             │
-                       └─ no signal ─────┴─ rejected ──┘
-                              │              │
-                          (skip cycle)   (logged + alert)`}</pre>
+          <pre>{`     market data ─▶ trend + momentum ─▶ risk filter ─▶ execution ─▶ telegram
+                       │                       │             │
+                       └─ no signal ────────────┴─ rejected ──┘
+                              │                      │
+                          (skip cycle)           (logged + alert)`}</pre>
         </Reveal>
       </div>
     </section>
