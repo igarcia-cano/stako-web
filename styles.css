@@ -3399,3 +3399,204 @@ body.has-constellation #root {
     opacity: 0.35;
   }
 }
+
+
+
+/* ============================================================
+   STAKO - Header en movil: oculta Lang/Theme/Auth en barra
+   superior y los muestra dentro del menu hamburguesa
+   ============================================================ */
+
+.nav__actions-desktop {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 880px) {
+  .nav__actions-desktop {
+    display: none;
+  }
+}
+
+.nav__mobile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 18px;
+  margin-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.nav__mobile-actions > * {
+  align-self: flex-start;
+}
+
+
+
+/* ============================================================
+   STAKO - Dropdown de categorias del blog
+   Sustituye los pills individuales por un selector elegante
+   que funciona igual en escritorio y movil.
+   ============================================================ */
+
+.blog-cat-dd {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Trigger (boton principal) */
+.blog-cat-dd__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 16px 9px 18px;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  min-height: 40px;
+  user-select: none;
+}
+.blog-cat-dd__trigger:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-card);
+}
+.blog-cat-dd__trigger.is-open {
+  border-color: var(--accent);
+  background: var(--bg-card);
+}
+.blog-cat-dd__trigger.is-active {
+  border-color: var(--gold);
+}
+
+.blog-cat-dd__label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  font-weight: 500;
+}
+
+.blog-cat-dd__value {
+  font-weight: 500;
+  color: var(--fg);
+  font-size: 14px;
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.blog-cat-dd__trigger.is-active .blog-cat-dd__value {
+  color: var(--gold);
+}
+
+.blog-cat-dd__chevron {
+  display: inline-flex;
+  color: var(--fg-muted);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.blog-cat-dd__trigger.is-open .blog-cat-dd__chevron {
+  transform: rotate(180deg);
+}
+
+/* Lista desplegada */
+.blog-cat-dd__list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  min-width: 240px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.2);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  animation: blog-cat-dd-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes blog-cat-dd-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.blog-cat-dd__list li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.blog-cat-dd__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: var(--fg-muted);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.blog-cat-dd__item:hover {
+  background: var(--bg-card-hover);
+  color: var(--fg);
+}
+.blog-cat-dd__item.is-active {
+  background: var(--bg-card);
+  color: var(--gold);
+  font-weight: 500;
+}
+.blog-cat-dd__item.is-active::before {
+  content: "\2022  ";
+  color: var(--gold);
+  margin-right: 4px;
+  font-weight: 700;
+}
+
+/* Movil: el dropdown ocupa mas ancho y la lista se anchura al 100% */
+@media (max-width: 600px) {
+  .blog-cat-dd {
+    width: 100%;
+  }
+  .blog-cat-dd__trigger {
+    width: 100%;
+    justify-content: space-between;
+    min-height: 44px;
+  }
+  .blog-cat-dd__value {
+    max-width: none;
+    flex: 1;
+    text-align: right;
+  }
+  .blog-cat-dd__list {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Tema claro: ajustes */
+[data-theme="light"] .blog-cat-dd__list {
+  box-shadow: 0 10px 40px rgba(10,11,13,0.12), 0 4px 12px rgba(10,11,13,0.06);
+}
+
+/* Las reglas viejas .blog-cats / .blog-cat se mantienen por
+   compatibilidad pero el componente ya no las usa */

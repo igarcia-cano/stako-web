@@ -123,6 +123,80 @@ function BlogRouter() {
   return <BlogListPage />;
 }
 
+function BlogCategoryDropdown({ categories, activeCat, onChange, t }) {
+  const [open, setOpen] = _bUseState(false);
+  const ref = React.useRef(null);
+
+  const activeLabel = activeCat
+    ? ((categories.find((c) => c.slug === activeCat) || {}).name || activeCat)
+    : t.blog.filter_all;
+
+  // Cerrar al hacer click fuera o pulsar ESC
+  _bUseEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const handle = (slug) => {
+    onChange(slug);
+    setOpen(false);
+  };
+
+  return (
+    <div className="blog-cat-dd" ref={ref}>
+      <button
+        type="button"
+        className={"blog-cat-dd__trigger" + (activeCat ? " is-active" : "") + (open ? " is-open" : "")}
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <span className="blog-cat-dd__label">{t.blog.filter_label || "Categoria"}</span>
+        <span className="blog-cat-dd__value">{activeLabel}</span>
+        <span className="blog-cat-dd__chevron" aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </button>
+      {open && (
+        <ul className="blog-cat-dd__list" role="listbox">
+          <li>
+            <button
+              type="button"
+              className={"blog-cat-dd__item" + (activeCat === "" ? " is-active" : "")}
+              onClick={() => handle("")}
+              role="option"
+              aria-selected={activeCat === ""}
+            >{t.blog.filter_all}</button>
+          </li>
+          {categories.map((c) => (
+            <li key={c.slug}>
+              <button
+                type="button"
+                className={"blog-cat-dd__item" + (activeCat === c.slug ? " is-active" : "")}
+                onClick={() => handle(c.slug)}
+                role="option"
+                aria-selected={activeCat === c.slug}
+                title={c.description || ""}
+              >{c.name}</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 /* === Lista === */
 function BlogListPage() {
   const { t, lang } = useApp();
@@ -172,20 +246,12 @@ function BlogListPage() {
       )}
 
       <div className="blog-toolbar">
-        <div className="blog-cats">
-          <button
-            className={"blog-cat" + (activeCat === "" ? " is-active" : "")}
-            onClick={() => setActiveCat("")}
-          >{t.blog.filter_all}</button>
-          {categories.map((c) => (
-            <button
-              key={c.slug}
-              className={"blog-cat" + (activeCat === c.slug ? " is-active" : "")}
-              onClick={() => setActiveCat(c.slug)}
-              title={c.description || ""}
-            >{c.name}</button>
-          ))}
-        </div>
+        <BlogCategoryDropdown
+          categories={categories}
+          activeCat={activeCat}
+          onChange={setActiveCat}
+          t={t}
+        />
         <input
           type="search"
           className="blog-search"

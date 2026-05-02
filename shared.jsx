@@ -167,9 +167,11 @@ function Nav({ active = "home" }) {
           ))}
         </nav>
         <div className="nav__actions">
-          <LangToggle />
-          <ThemeToggle />
-          <AuthSlot />
+          <div className="nav__actions-desktop hide-sm">
+            <LangToggle />
+            <ThemeToggle />
+            <AuthSlot />
+          </div>
           <button
             className="icon-btn show-sm"
             aria-label="Open menu"
@@ -192,6 +194,11 @@ function Nav({ active = "home" }) {
               {l.soon && <span className="nav__soon">{t.nav.soon}</span>}
             </a>
           ))}
+          <div className="nav__mobile-actions">
+            <LangToggle />
+            <ThemeToggle />
+            <AuthSlot />
+          </div>
         </div>
       )}
     </header>
