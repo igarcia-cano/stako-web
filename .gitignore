@@ -34,6 +34,7 @@ _*.md
 
 # Carpetas de scratch / drafts (no van al repo)
 _articles_temp/
+_articles_v3/
 _drafts/
 _tmp/
 
