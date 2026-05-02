@@ -341,7 +341,7 @@
     return res.json();
   }
 
-  async function blogListPublishedPosts({ category, q, limit = 20, offset = 0 } = {}) {
+  async function blogListPublishedPosts({ category, q, limit = 200, offset = 0 } = {}) {
     let url = `${SUPABASE_URL}/rest/v1/blog_posts?select=id,slug,title,subtitle,excerpt,title_en,subtitle_en,excerpt_en,body_md_en,category_slug,tags,cover_image_url,author,published_at,reading_time_min&status=eq.published&order=published_at.desc&limit=${limit}&offset=${offset}`;
     if (category) url += `&category_slug=eq.${encodeURIComponent(category)}`;
     if (q)        url += `&or=(title.ilike.*${encodeURIComponent(q)}*,excerpt.ilike.*${encodeURIComponent(q)}*,title_en.ilike.*${encodeURIComponent(q)}*,excerpt_en.ilike.*${encodeURIComponent(q)}*)`;
