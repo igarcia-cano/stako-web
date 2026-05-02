@@ -68,6 +68,9 @@
 html, body {
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
 }
 body {
   font-family: var(--font-sans);
@@ -3317,5 +3320,82 @@ body.has-constellation #root {
   }
   .blog-kiosk-hero__title {
     font-size: 30px;
+  }
+}
+
+
+
+/* ============================================================
+   STAKO - REFUERZOS MOVIL (anti-overflow + cinturones de seguridad)
+   Anadido para garantizar que ningun elemento provoque scroll
+   horizontal en moviles, lo que llevaba a desactivar las media
+   queries y mostrar el layout de escritorio.
+   ============================================================ */
+
+@media (max-width: 900px) {
+  /* Garantizar que TODO contenedor principal respeta el ancho
+     del viewport - cinturon de seguridad ante elementos rebeldes */
+  .container,
+  .blog-wrap,
+  .blog-grid,
+  .blog-section,
+  .blog-section__grid,
+  .blog-featured,
+  .blog-kiosk-hero {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Las imagenes nunca deben superar el contenedor */
+  img, video, iframe, canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* En movil, el modo quiosco SIEMPRE en una columna,
+     reforzando las reglas anteriores con mayor especificidad */
+  .blog-section__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .blog-featured {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Evita que la cabecera del modo quiosco cause overflow */
+  .blog-kiosk-hero {
+    flex-wrap: wrap;
+  }
+}
+
+/* En moviles, los blobs animados del fondo aurora pueden causar
+   reflows costosos y problemas de rendimiento. Los reducimos. */
+@media (max-width: 600px) {
+  .stk-aurora__blob--1,
+  .stk-aurora__blob--2 {
+    width: 280px;
+    height: 280px;
+    filter: blur(50px);
+  }
+  .stk-aurora__blob--1 {
+    top: -60px;
+    left: -60px;
+  }
+  .stk-aurora__blob--2 {
+    bottom: -80px;
+    right: -60px;
+  }
+  .stk-aurora__blob--3 {
+    width: 240px;
+    height: 240px;
+  }
+}
+
+/* Y para iPhones pequenos / Android compacto, eliminar cualquier
+   animacion de fondo - prioridad: contenido legible y rapido */
+@media (max-width: 420px) {
+  .stk-aurora__blob {
+    animation: none !important;
+    opacity: 0.35;
   }
 }
