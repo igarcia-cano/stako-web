@@ -138,7 +138,7 @@ window.STAKO_I18N = {
       pipeline: [
         { t: "Comando inicial", d: "El usuario abre el bot en Telegram y escribe /start. El bot responde con su descripción y un menú." },
         { t: "Conexión con Binance", d: "Te guía para crear una API key con permisos solo de Spot Trading. Stako jamás puede retirar fondos." },
-        { t: "Capital y riesgo", d: "Decides cuánto USDC asignas y el nivel de riesgo. El bot elige los pares automáticamente según la estrategia." },
+        { t: "Capital y riesgo", d: "Decides cuánto USDC asignas y el perfil de riesgo (conservador, moderado o agresivo). El bot opera BTC/USDC con los parámetros calibrados de cada perfil." },
         { t: "Operativa en vivo", d: "El bot opera 24/7 en velas de 4h. Recibes notificación en cada compra y venta con el motivo." },
       ],
       chat: {
@@ -438,7 +438,7 @@ window.STAKO_I18N = {
       pipeline: [
         { t: "Initial command", d: "The user opens the bot in Telegram and types /start. The bot replies with its description and a menu." },
         { t: "Binance connection", d: "Guides you to create an API key with Spot Trading permissions only. Stako can never withdraw funds." },
-        { t: "Capital and risk", d: "You decide how much USDC to allocate and the risk profile. The bot picks the pairs automatically based on the strategy." },
+        { t: "Capital and risk", d: "You decide how much USDC to allocate and the risk profile (conservative, moderate or aggressive). The bot trades BTC/USDC with the parameters calibrated for each profile." },
         { t: "Live trading", d: "The bot trades 24/7 on 4h candles. You get a ping on every buy and sell with the reason." },
       ],
       chat: {
