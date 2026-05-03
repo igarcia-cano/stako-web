@@ -2523,6 +2523,14 @@ body.has-constellation #root {
   z-index: 1;
 }
 
+/* En movil, la constelacion animada no aporta valor (no hay cursor
+   con el que interactuar), consume CPU/bateria y puede causar
+   problemas de layout. La ocultamos completamente y dejamos el
+   fondo plano del --bg. */
+@media (max-width: 880px) {
+  .stk-constellation { display: none !important; }
+}
+
 /* ============================================================
    BLOG · MODO QUIOSCO
    Layout editorial inspirado en periódico financiero.

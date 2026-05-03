@@ -11,14 +11,26 @@
     return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
 
+  function isMobile() {
+    // Misma logica que el CSS: 880px coincide con el breakpoint donde
+    // ocultamos la constelacion en .stk-constellation (mobile y tablet).
+    return !!(window.matchMedia && window.matchMedia('(max-width: 880px)').matches);
+  }
+
   function init() {
     var canvas = document.getElementById('stk-constellation');
     if (!canvas) return;
+
+    // En movil/tablet, ni siquiera intentamos animar: el CSS oculta
+    // el canvas y la animacion solo gastaria CPU y bateria sin
+    // beneficio (no hay cursor con el que interactuar).
+    if (isMobile()) return;
+
     var ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     if (reducedMotion()) {
-      // Una sola pasada estática: puntos sin animación ni interacción
+      // Una sola pasada estatica: puntos sin animacion ni interaccion
       drawStatic(canvas, ctx);
       return;
     }
