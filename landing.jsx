@@ -67,7 +67,7 @@ function HeroViz() {
       <div className="viz__chart card">
         <div className="viz__chart-head">
           <div>
-            <div className="eyebrow">BTC/USDT · 24h</div>
+            <div className="eyebrow">BTC/USDC · 24h</div>
             <div className="viz__price mono num-tab">{priceStr}</div>
           </div>
           <div className={`viz__change ${change >= 0 ? "is-up" : "is-down"} mono`}>
@@ -106,7 +106,7 @@ function HeroViz() {
         </div>
         <div className="tg-msg">
           <div className="tg-msg__head mono">
-            <span className="text-accent">▲ BUY</span> · BTC/USDT
+            <span className="text-accent">▲ BUY</span> · BTC/USDC
           </div>
           <div className="tg-msg__row"><span>{lang === "es" ? "Precio" : "Price"}</span><span className="mono num-tab">$67,432</span></div>
           <div className="tg-msg__row"><span>{lang === "es" ? "Cantidad" : "Size"}</span><span className="mono num-tab">0.0148 BTC</span></div>
@@ -379,7 +379,7 @@ function PillarArt({ kind }) {
         <div className="pa-bot__chat">
           <div className="pa-bot__line">
             <span className="text-accent mono">▲ BUY</span>
-            <span className="mono">BTC/USDT</span>
+            <span className="mono">BTC/USDC</span>
             <span className="mono num-tab">$67,432</span>
           </div>
           <div className="pa-bot__line pa-bot__line--muted">
@@ -388,7 +388,7 @@ function PillarArt({ kind }) {
           </div>
           <div className="pa-bot__line">
             <span className="text-gold mono">▼ SELL</span>
-            <span className="mono">BTC/USDT</span>
+            <span className="mono">BTC/USDC</span>
             <span className="mono num-tab">$69,580</span>
           </div>
           <div className="pa-bot__line pa-bot__line--muted">
