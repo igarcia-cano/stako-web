@@ -33,7 +33,7 @@ window.STAKO_I18N = {
         bot: {
           tag: "Activo",
           name: "Bot de Trading",
-          desc: "Opera 24/7 en Binance con un saldo aislado en USDC. Multi-asset rotation entre BTC, ETH, SOL, BNB y ADA.",
+          desc: "Opera 24/7 en Binance con un saldo aislado en USDC. Estrategia trend-following sobre BTC en velas de 4h.",
           cta: "Ver detalle",
         },
         books: {
@@ -53,7 +53,7 @@ window.STAKO_I18N = {
     bot: {
       eyebrow: "Bot de trading",
       title: "Capital aislado, decisiones algorítmicas.",
-      sub: "Asignas un saldo aislado de USDC en tu cuenta de Binance. El bot decide cuándo comprar y vender en BTC, ETH, SOL, BNB y ADA, con trend-following y gestión de riesgo automática.",
+      sub: "Asignas un saldo aislado de USDC en tu cuenta de Binance. El bot decide cuándo comprar y vender BTC/USDC, con trend-following y gestión de riesgo automática.",
       steps_title: "Tres pasos para empezar",
       steps: [
         { n: "01", t: "Conecta", d: "Vincula tu cuenta de Binance vía API. El bot solo opera; nunca retira fondos." },
@@ -119,7 +119,7 @@ window.STAKO_I18N = {
       back: "Volver",
       hero_eyebrow: "Producto · Bot de trading",
       hero_title: "Un bot que opera por ti, sin tocar el resto de tu cartera.",
-      hero_sub: "Asignas un saldo aislado de USDC en Binance. El bot rota entre BTC, ETH, SOL, BNB y ADA con estrategia trend-following en 4h. Todo desde Telegram.",
+      hero_sub: "Asignas un saldo aislado de USDC en Binance. El bot opera BTC/USDC con estrategia trend-following en velas de 4h. Todo desde Telegram.",
       cta_join: "Reservar plaza en la beta",
       cta_demo: "Ver demo en Telegram",
       telegram_title: "Así te recibe el bot en Telegram",
@@ -131,7 +131,7 @@ window.STAKO_I18N = {
         { q: "¿El bot puede retirar mis fondos?", a: "No. La API se configura solo con permisos de Spot Trading. Stako nunca tiene acceso a retiros ni a futuros." },
         { q: "¿Qué pasa si Binance cae?", a: "El bot pausa operaciones y te avisa. No hay reintentos ciegos contra una API caída." },
         { q: "¿Puedo retirar mi capital cuando quiera?", a: "Siempre. El saldo está en tu cuenta de Binance. Pausas el bot y dispones del USDC al instante." },
-        { q: "¿Qué pares opera?", a: "BTC/USDC, ETH/USDC, SOL/USDC, BNB/USDC y ADA/USDC. El bot rota entre ellos según el momentum de cada uno (perfiles moderado y agresivo). En perfil conservador opera solo BTC." },
+        { q: "¿Qué pares opera?", a: "BTC/USDC. La validación con datos históricos reales mostró que añadir más pares deterioraba el rendimiento, así que el bot se centra en BTC, donde la estrategia funciona mejor en los tres perfiles (conservador, moderado y agresivo)." },
         { q: "¿Por qué USDC y no USDT?", a: "Por cumplimiento MiCA. Desde marzo 2025, Binance retiró el spot trading de USDT en el Espacio Económico Europeo. USDC sí cumple MiCA y tiene buena liquidez en todos los pares relevantes." },
         { q: "¿Hay garantía de rentabilidad?", a: "No. Es trading: hay pérdidas y ganancias. La gestión de riesgo limita el daño, no lo elimina." },
       ],
@@ -143,7 +143,7 @@ window.STAKO_I18N = {
       ],
       chat: {
         time_label: "Hoy 12:42",
-        bot_intro: "Soy un bot de trading automático que opera con un capital aislado en tu cuenta de Binance. Tú me asignas un saldo de USDC y yo decido cuándo comprar y vender en BTC, ETH, SOL, BNB y ADA usando estrategias trend-following en 4h.",
+        bot_intro: "Soy un bot de trading automático que opera con un capital aislado en tu cuenta de Binance. Tú me asignas un saldo de USDC y yo decido cuándo comprar y vender BTC usando una estrategia trend-following en velas de 4h.",
         cmd_connect: "/conectar",
         cmd_start: "/iniciar",
         cmd_balance: "/balance",
@@ -333,7 +333,7 @@ window.STAKO_I18N = {
         bot: {
           tag: "Live",
           name: "Trading Bot",
-          desc: "Runs 24/7 on Binance against an isolated USDC balance. Multi-asset rotation across BTC, ETH, SOL, BNB and ADA.",
+          desc: "Runs 24/7 on Binance against an isolated USDC balance. Trend-following strategy on BTC, 4h candles.",
           cta: "See details",
         },
         books: {
@@ -353,7 +353,7 @@ window.STAKO_I18N = {
     bot: {
       eyebrow: "Trading bot",
       title: "Isolated capital, algorithmic decisions.",
-      sub: "You allocate an isolated USDC balance in your Binance account. The bot decides when to buy and sell across BTC, ETH, SOL, BNB and ADA, with trend-following and automatic risk management.",
+      sub: "You allocate an isolated USDC balance in your Binance account. The bot decides when to buy and sell BTC/USDC, with trend-following and automatic risk management.",
       steps_title: "Three steps to start",
       steps: [
         { n: "01", t: "Connect", d: "Link your Binance account via API. The bot can only trade; never withdraw." },
@@ -419,7 +419,7 @@ window.STAKO_I18N = {
       back: "Back",
       hero_eyebrow: "Product · Trading bot",
       hero_title: "A bot that trades for you, without touching the rest of your portfolio.",
-      hero_sub: "You allocate an isolated USDC balance on Binance. The bot rotates across BTC, ETH, SOL, BNB and ADA with a trend-following strategy on 4h candles. All from Telegram.",
+      hero_sub: "You allocate an isolated USDC balance on Binance. The bot trades BTC/USDC with a trend-following strategy on 4h candles. All from Telegram.",
       cta_join: "Reserve a beta seat",
       cta_demo: "See Telegram demo",
       telegram_title: "How the bot greets you on Telegram",
@@ -431,7 +431,7 @@ window.STAKO_I18N = {
         { q: "Can the bot withdraw my funds?", a: "No. The API key is set up with Spot Trading permissions only. Stako never has withdraw or futures access." },
         { q: "What if Binance is down?", a: "The bot pauses and notifies you. No blind retries against a dead API." },
         { q: "Can I withdraw my capital anytime?", a: "Always. The balance lives in your Binance account. Pause the bot and it's yours instantly." },
-        { q: "Which pairs does it trade?", a: "BTC/USDC, ETH/USDC, SOL/USDC, BNB/USDC and ADA/USDC. The bot rotates between them based on momentum (moderate and aggressive profiles). The conservative profile trades BTC only." },
+        { q: "Which pairs does it trade?", a: "BTC/USDC. Real historical validation showed that adding more pairs hurt performance, so the bot focuses on BTC, where the strategy works best across all three profiles (conservative, moderate, aggressive)." },
         { q: "Why USDC and not USDT?", a: "MiCA compliance. Since March 2025, Binance delisted USDT spot trading in the European Economic Area. USDC is MiCA-compliant and has solid liquidity across all relevant pairs." },
         { q: "Is profit guaranteed?", a: "No. It's trading: there are losses and gains. Risk management caps the damage; it doesn't remove it." },
       ],
@@ -443,7 +443,7 @@ window.STAKO_I18N = {
       ],
       chat: {
         time_label: "Today 12:42",
-        bot_intro: "I'm an automated trading bot that runs against an isolated balance in your Binance account. You allocate a USDC balance and I decide when to buy and sell across BTC, ETH, SOL, BNB and ADA using trend-following on 4h candles.",
+        bot_intro: "I'm an automated trading bot that runs against an isolated balance in your Binance account. You allocate a USDC balance and I decide when to buy and sell BTC using a trend-following strategy on 4h candles.",
         cmd_connect: "/connect",
         cmd_start: "/start_trading",
         cmd_balance: "/balance",

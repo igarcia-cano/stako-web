@@ -60,16 +60,16 @@ function BotHero() {
 function BotHeroStats() {
   const { lang } = useApp();
   const stats = lang === "es" ? [
-    { l: "Pares activos", v: "BTC·ETH·SOL·BNB·ADA" },
+    { l: "Activo", v: "BTC/USDC" },
     { l: "Frecuencia", v: "4H" },
-    { l: "Estrategia", v: "Trend + Momentum" },
+    { l: "Estrategia", v: "V4 BTC trend-following" },
     { l: "Riesgo por trade", v: "1.5%–2.8%" },
     { l: "Capital mínimo", v: "50 USDC" },
     { l: "Notificación", v: "Telegram" },
   ] : [
-    { l: "Active pairs", v: "BTC·ETH·SOL·BNB·ADA" },
+    { l: "Asset", v: "BTC/USDC" },
     { l: "Frequency", v: "4H" },
-    { l: "Strategy", v: "Trend + Momentum" },
+    { l: "Strategy", v: "V4 BTC trend-following" },
     { l: "Risk per trade", v: "1.5%–2.8%" },
     { l: "Min capital", v: "50 USDC" },
     { l: "Notifications", v: "Telegram" },
@@ -78,7 +78,7 @@ function BotHeroStats() {
     <div className="bothero__stats card">
       <div className="bothero__stats-head">
         <div className="eyebrow">— {lang === "es" ? "Especificaciones" : "Specs"}</div>
-        <span className="tag tag-live"><span className="dot"></span>v5A</span>
+        <span className="tag tag-live"><span className="dot"></span>v4</span>
       </div>
       <dl className="specs">
         {stats.map((s) => (
@@ -197,7 +197,7 @@ function useTelegramScript(lang) {
     {
       kind: "bot",
       title: "👋 Bienvenido a Stako Bot",
-      body: "Soy un bot de trading automático que opera con un capital aislado en tu cuenta de Binance. Tú me asignas un saldo de USDC y yo decido cuándo comprar y vender usando estrategias trend-following en 4h sobre BTC, ETH, SOL, BNB y ADA.",
+      body: "Soy un bot de trading automático que opera con un capital aislado en tu cuenta de Binance. Tú me asignas un saldo de USDC y yo decido cuándo comprar y vender usando una estrategia trend-following en velas de 4h.",
       buttons: ["⚙️ Conectar Binance", "📖 Cómo funciona"],
       time: "12:42",
     },
@@ -215,8 +215,8 @@ function useTelegramScript(lang) {
       lines: [
         { k: "Capital", v: "1,000 USDC" },
         { k: "Riesgo", v: "Moderado" },
-        { k: "Estrategia", v: "V5A multi-asset" },
-        { k: "Universo", v: "BTC·ETH·SOL·BNB·ADA" },
+        { k: "Estrategia", v: "V4 BTC trend-following" },
+        { k: "Activo", v: "BTC/USDC" },
       ],
       buttons: ["▶ Iniciar /iniciar", "📊 Estado"],
       time: "12:44",
@@ -227,7 +227,7 @@ function useTelegramScript(lang) {
     {
       kind: "bot",
       title: "👋 Welcome to Stako Bot",
-      body: "I'm an automated trading bot that runs on isolated capital in your Binance account. You allocate me a USDC balance and I decide when to buy and sell using trend-following strategies on 4h candles across BTC, ETH, SOL, BNB and ADA.",
+      body: "I'm an automated trading bot that runs on isolated capital in your Binance account. You allocate me a USDC balance and I decide when to buy and sell using a trend-following strategy on 4h candles.",
       buttons: ["⚙️ Connect Binance", "📖 How it works"],
       time: "12:42",
     },
@@ -245,8 +245,8 @@ function useTelegramScript(lang) {
       lines: [
         { k: "Capital", v: "1,000 USDC" },
         { k: "Risk", v: "Moderate" },
-        { k: "Strategy", v: "V5A multi-asset" },
-        { k: "Universe", v: "BTC·ETH·SOL·BNB·ADA" },
+        { k: "Strategy", v: "V4 BTC trend-following" },
+        { k: "Asset", v: "BTC/USDC" },
       ],
       buttons: ["▶ Start /start_trading", "📊 Status"],
       time: "12:44",
@@ -272,17 +272,17 @@ function BotPipeline() {
   const p = t.bot_page;
   const isES = lang === "es";
   const steps = isES ? [
-    { tag: "01 · INPUT", title: "Datos de mercado", desc: "Velas 4H de Binance sobre BTC, ETH, SOL, BNB y ADA. Histórico continuo, sin huecos." },
+    { tag: "01 · INPUT", title: "Datos de mercado", desc: "Velas 4H de Binance sobre BTC/USDC. Histórico continuo, sin huecos." },
     { tag: "02 · SEÑAL", title: "Trend + Momentum", desc: "Filtro SMA-180 para tendencia. TSMOM-28d para momentum. ADX confirma fuerza del movimiento." },
     { tag: "03 · VALIDACIÓN", title: "Filtro de riesgo", desc: "¿Hay capital? ¿La señal pasa los gates? ¿API operativa? Si no, se descarta." },
     { tag: "04 · EJECUCIÓN", title: "Orden en Binance", desc: "Orden de mercado con stop-loss dinámico (Donchian + Chandelier). Confirmación en milisegundos." },
-    { tag: "05 · NOTIFICACIÓN", title: "Telegram", desc: "Mensaje instantáneo con par, precio, cantidad, score y motivo de la operación." },
+    { tag: "05 · NOTIFICACIÓN", title: "Telegram", desc: "Mensaje instantáneo con precio, cantidad, score y motivo de la operación." },
   ] : [
-    { tag: "01 · INPUT", title: "Market data", desc: "4H candles from Binance across BTC, ETH, SOL, BNB and ADA. Continuous history, no gaps." },
+    { tag: "01 · INPUT", title: "Market data", desc: "4H candles from Binance on BTC/USDC. Continuous history, no gaps." },
     { tag: "02 · SIGNAL", title: "Trend + Momentum", desc: "SMA-180 trend filter. TSMOM-28d momentum. ADX confirms move strength." },
     { tag: "03 · VALIDATION", title: "Risk filter", desc: "Capital available? Signal passes the gates? API healthy? Otherwise, skip." },
     { tag: "04 · EXECUTION", title: "Order on Binance", desc: "Market order with dynamic stop-loss (Donchian + Chandelier). Confirmation in milliseconds." },
-    { tag: "05 · NOTIFICATION", title: "Telegram", desc: "Instant message with pair, price, size, score and reason for the trade." },
+    { tag: "05 · NOTIFICATION", title: "Telegram", desc: "Instant message with price, size, score and reason for the trade." },
   ];
   return (
     <section className="pipeline">
