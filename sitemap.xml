@@ -2,54 +2,168 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://stakocapital.com/</loc>
-    <lastmod>2026-05-02</lastmod>
+    <lastmod>2026-05-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://stakocapital.com/blog</loc>
-    <lastmod>2026-05-02</lastmod>
+    <lastmod>2026-05-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://stakocapital.com/bot</loc>
-    <lastmod>2026-05-02</lastmod>
+    <lastmod>2026-05-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://stakocapital.com/aviso-legal</loc>
-    <lastmod>2026-05-02</lastmod>
+    <lastmod>2026-05-03</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://stakocapital.com/privacidad</loc>
-    <lastmod>2026-05-02</lastmod>
+    <lastmod>2026-05-03</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://stakocapital.com/cookies</loc>
-    <lastmod>2026-05-02</lastmod>
+    <lastmod>2026-05-03</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://stakocapital.com/aviso-riesgo</loc>
-    <lastmod>2026-05-02</lastmod>
+    <lastmod>2026-05-03</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=estanflacion-inflacion-paro-anos-setenta-volcker</loc>
-    <lastmod>2026-05-02</lastmod>
+    <loc>https://stakocapital.com/blog?p=libro-reminiscences-stock-operator-lefevre</loc>
+    <lastmod>2026-05-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=quantitative-easing-qe-bancos-centrales-tipos-cero</loc>
+    <loc>https://stakocapital.com/blog?p=libro-one-up-wall-street-peter-lynch</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=tipos-cambio-fijo-flotante-intermedio</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=balanza-cuenta-corriente-deuda-externa</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=pib-como-se-calcula-que-deja-fuera</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=mercados-emergentes-promesa-realidad-volatilidad</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=materias-primas-commodities-cartera-inversion</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=forex-mercado-divisas-funcionamiento-riesgos</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=asignacion-activos-estrategica-vs-tactica</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=all-weather-ray-dalio-cartera-todos-escenarios</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=john-bogle-vanguard-revolucion-fondos-indexados</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=letras-tesoro-funcionamiento-rentabilidad</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=reits-socimis-inversion-inmobiliaria-cotizada</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=comisiones-fondos-ter-impacto-largo-plazo</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=volatilidad-que-es-como-se-mide-vix</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=renta-fija-vs-renta-variable-diferencias-clave</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=japon-crash-1990-decadas-perdidas-nikkei</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=burbuja-dotcom-2000-nasdaq-internet</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=crisis-peso-mexicano-1994-efecto-tequila</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=madoff-piramide-65000-millones-historia-fraude</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=libro-pensar-rapido-despacio-kahneman-resena</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -61,19 +175,25 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=politica-fiscal-monetaria-diferencia-coordinacion</loc>
-    <lastmod>2026-05-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://stakocapital.com/blog?p=libro-inversor-inteligente-benjamin-graham-resena</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=libro-pensar-rapido-despacio-kahneman-resena</loc>
+    <loc>https://stakocapital.com/blog?p=estanflacion-inflacion-paro-anos-setenta-volcker</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=politica-fiscal-monetaria-diferencia-coordinacion</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=quantitative-easing-qe-bancos-centrales-tipos-cero</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -85,7 +205,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=short-selling-venta-en-corto-como-funciona</loc>
+    <loc>https://stakocapital.com/blog?p=stablecoins-usdt-usdc-dai-explicacion-mica</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -97,13 +217,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=stablecoins-usdt-usdc-dai-explicacion-mica</loc>
+    <loc>https://stakocapital.com/blog?p=reserva-federal-fed-como-funciona-banco-central</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=reserva-federal-fed-como-funciona-banco-central</loc>
+    <loc>https://stakocapital.com/blog?p=short-selling-venta-en-corto-como-funciona</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -115,31 +235,19 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=inflacion-poder-adquisitivo-erosion-largo-plazo</loc>
-    <lastmod>2026-05-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://stakocapital.com/blog?p=market-timing-cronometrar-mercado-mejores-dias</loc>
-    <lastmod>2026-05-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://stakocapital.com/blog?p=fire-financial-independence-retire-early-jubilacion-temprana</loc>
-    <lastmod>2026-05-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://stakocapital.com/blog?p=regla-4-porciento-bengen-jubilacion-tasa-retirada</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=dollar-cost-averaging-dca-aportaciones-periodicas</loc>
+    <loc>https://stakocapital.com/blog?p=dividendos-empresas-yield-payout-recompras</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=inflacion-poder-adquisitivo-erosion-largo-plazo</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -157,43 +265,19 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=dividendos-empresas-yield-payout-recompras</loc>
+    <loc>https://stakocapital.com/blog?p=dollar-cost-averaging-dca-aportaciones-periodicas</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=lehman-brothers-15-septiembre-2008-quiebra-sistemica</loc>
+    <loc>https://stakocapital.com/blog?p=fire-financial-independence-retire-early-jubilacion-temprana</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=liquidez-mercado-bid-ask-spread-crisis</loc>
-    <lastmod>2026-05-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://stakocapital.com/blog?p=apalancamiento-leverage-finanzas-margen-call</loc>
-    <lastmod>2026-05-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://stakocapital.com/blog?p=etfs-que-son-como-funcionan-spy-vanguard</loc>
-    <lastmod>2026-05-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://stakocapital.com/blog?p=acciones-que-son-como-funcionan-bolsa</loc>
-    <lastmod>2026-05-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://stakocapital.com/blog?p=crisis-euro-grecia-draghi-whatever-it-takes-2010-2012</loc>
+    <loc>https://stakocapital.com/blog?p=market-timing-cronometrar-mercado-mejores-dias</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -205,13 +289,49 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=black-monday-1987-crash-22-porciento-un-dia</loc>
+    <loc>https://stakocapital.com/blog?p=etfs-que-son-como-funcionan-spy-vanguard</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=apalancamiento-leverage-finanzas-margen-call</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=crisis-euro-grecia-draghi-whatever-it-takes-2010-2012</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=acciones-que-son-como-funcionan-bolsa</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=liquidez-mercado-bid-ask-spread-crisis</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=lehman-brothers-15-septiembre-2008-quiebra-sistemica</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://stakocapital.com/blog?p=soros-banco-inglaterra-libra-1992-miercoles-negro</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stakocapital.com/blog?p=black-monday-1987-crash-22-porciento-un-dia</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -283,7 +403,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=burbuja-mar-del-sur-1720-newton-leccion</loc>
+    <loc>https://stakocapital.com/blog?p=que-es-una-ipo-empresa-cotiza-bolsa</loc>
     <lastmod>2026-05-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -301,13 +421,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=que-es-una-ipo-empresa-cotiza-bolsa</loc>
+    <loc>https://stakocapital.com/blog?p=hiperinflacion-weimar-pan-200-mil-millones-marcos</loc>
     <lastmod>2026-05-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stakocapital.com/blog?p=hiperinflacion-weimar-pan-200-mil-millones-marcos</loc>
+    <loc>https://stakocapital.com/blog?p=burbuja-mar-del-sur-1720-newton-leccion</loc>
     <lastmod>2026-05-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
