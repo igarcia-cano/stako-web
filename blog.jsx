@@ -272,7 +272,7 @@ function BlogListPage() {
       )}
 
       {posts !== null && posts.length > 0 && isKiosk && (
-        <BlogKioskoView posts={posts} categories={categories} lang={lang} t={t} />
+        <BlogKioskoView posts={posts} categories={categories} lang={lang} t={t} onSelectCategory={setActiveCat} />
       )}
 
       {posts !== null && posts.length > 0 && !isKiosk && (
@@ -285,7 +285,7 @@ function BlogListPage() {
 }
 
 /* === Modo Quiosco === */
-function BlogKioskoView({ posts, categories, lang, t }) {
+function BlogKioskoView({ posts, categories, lang, t, onSelectCategory }) {
   if (!posts || posts.length === 0) return null;
   const featured = posts[0];
   const rest = posts.slice(1);
@@ -314,28 +314,66 @@ function BlogKioskoView({ posts, categories, lang, t }) {
     }
   });
 
+  // Activa el filtro de categoría y hace scroll al toolbar para que se vea aplicado
+  const handleCategoryClick = (slug) => {
+    if (typeof onSelectCategory === "function") {
+      onSelectCategory(slug);
+      // Scroll suave al toolbar (donde aparece el filtro activado)
+      setTimeout(() => {
+        const tb = document.querySelector(".blog-toolbar");
+        if (tb) tb.scrollIntoView({ behavior: "smooth", block: "start" });
+        else window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 50);
+    }
+  };
+
+  const seeMoreLabel = (t.blog && t.blog.kiosk_see_more) || "Ver todos";
+
   return (
     <React.Fragment>
       <BlogFeatured post={featured} lang={lang} t={t} />
-      {sections.map((s) => (
-        <section key={s.slug} className="blog-section">
-          <header className="blog-section__header">
-            <span className="blog-section__label">{s.name}</span>
-            <span className="blog-section__line"></span>
-            <span className="blog-section__count">
-              {s.items.length}{" "}
-              {(s.items.length === 1)
-                ? (t.blog.kiosk_meta_published_one || "publicado")
-                : (t.blog.kiosk_meta_published_other || "publicados")}
-            </span>
-          </header>
-          <div className="blog-section__grid">
-            {s.items.slice(0, 6).map((p) => (
-              <BlogCardCompact key={p.id} post={p} lang={lang} t={t} />
-            ))}
-          </div>
-        </section>
-      ))}
+      {sections.map((s) => {
+        const totalCount = s.items.length;
+        const visible = s.items.slice(0, 6);
+        const hiddenCount = totalCount - visible.length;
+        const countLabel = (totalCount === 1)
+          ? (t.blog.kiosk_meta_published_one || "publicado")
+          : (t.blog.kiosk_meta_published_other || "publicados");
+        return (
+          <section key={s.slug} className="blog-section">
+            <button
+              type="button"
+              className="blog-section__header blog-section__header--button"
+              onClick={() => handleCategoryClick(s.slug)}
+              aria-label={`${s.name} — ${seeMoreLabel}`}
+            >
+              <span className="blog-section__label">{s.name}</span>
+              <span className="blog-section__line"></span>
+              <span className="blog-section__count">
+                {totalCount} {countLabel}
+              </span>
+              <span className="blog-section__chevron" aria-hidden="true">→</span>
+            </button>
+            <div className="blog-section__grid">
+              {visible.map((p) => (
+                <BlogCardCompact key={p.id} post={p} lang={lang} t={t} />
+              ))}
+            </div>
+            {hiddenCount > 0 && (
+              <div className="blog-section__more">
+                <button
+                  type="button"
+                  className="blog-section__more-btn"
+                  onClick={() => handleCategoryClick(s.slug)}
+                >
+                  <span>{seeMoreLabel} ({totalCount})</span>
+                  <span className="blog-section__more-arrow" aria-hidden="true">→</span>
+                </button>
+              </div>
+            )}
+          </section>
+        );
+      })}
     </React.Fragment>
   );
 }
