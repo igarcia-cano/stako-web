@@ -341,7 +341,7 @@
     return res.json();
   }
 
-  async function blogListPublishedPosts({ category, q, limit = 200, offset = 0 } = {}) {
+  async function blogListPublishedPosts({ category, q, limit = 1000, offset = 0 } = {}) {
     let url = `${SUPABASE_URL}/rest/v1/blog_posts?select=id,slug,title,subtitle,excerpt,title_en,subtitle_en,excerpt_en,body_md_en,category_slug,tags,cover_image_url,author,published_at,reading_time_min&status=eq.published&order=published_at.desc&limit=${limit}&offset=${offset}`;
     if (category) url += `&category_slug=eq.${encodeURIComponent(category)}`;
     if (q)        url += `&or=(title.ilike.*${encodeURIComponent(q)}*,excerpt.ilike.*${encodeURIComponent(q)}*,title_en.ilike.*${encodeURIComponent(q)}*,excerpt_en.ilike.*${encodeURIComponent(q)}*)`;
@@ -360,7 +360,7 @@
 
   /* --- Admin --- */
   async function adminBlogListAllPosts({ status, q } = {}) {
-    let url = `${SUPABASE_URL}/rest/v1/blog_posts?select=id,slug,title,subtitle,excerpt,category_slug,tags,cover_image_url,author,status,published_at,reading_time_min,created_at,updated_at&order=created_at.desc&limit=200`;
+    let url = `${SUPABASE_URL}/rest/v1/blog_posts?select=id,slug,title,subtitle,excerpt,category_slug,tags,cover_image_url,author,status,published_at,reading_time_min,created_at,updated_at&order=created_at.desc&limit=1000`;
     if (status && status !== "all") url += `&status=eq.${status}`;
     if (q) url += `&or=(title.ilike.*${encodeURIComponent(q)}*,slug.ilike.*${encodeURIComponent(q)}*)`;
     const res = await fetch(url, { headers: authHeaders(true) });
